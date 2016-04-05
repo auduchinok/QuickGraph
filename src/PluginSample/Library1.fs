@@ -18,8 +18,9 @@ type SamplePlugin() =
         member this.Description = "This plugin demonstrates how to use plugin system.\n" +
                                   "Add references to your plugins to MainForm project.\n" +
                                   "Read more at Mono.Addins wiki page on GitHub."
-        member this.Author = "Anastasiya Ragozina & Eugene Auduchinok"
+        member this.Author = "Anastasiya Ragozina, Eugene Auduchinok"
         member this.Input = new System.Windows.Forms.TextBox()
         member this.Output = new GraphX.Controls.GraphArea<VertexBase, EdgeBase<VertexBase>, BidirectionalGraph<VertexBase, EdgeBase<VertexBase>>> ()
+//        member this.Run = ()
         
 

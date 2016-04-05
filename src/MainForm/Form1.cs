@@ -1,6 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Windows.Forms;
-using Common;
 
 namespace MainForm
 {
@@ -11,13 +12,49 @@ namespace MainForm
             InitializeComponent();
         }
 
-        private void algorithmsList_SelectedValueChanged(object sender, EventArgs e)
+        private void ParseButtonClick(object sender, EventArgs e)
         {
-            codeEditorPanel.Controls.Clear();
+            //Program.CurrentAlgorithm.Run(DotLangParser.parse(Program.Editor.Text));
+            //Program.CurrentAlgorithm.Run(); // todo: send graph parsed from dot
+
+            var graph = DotLangParser.parse(Program.Editor.Text);
+            MessageBox.Show(graph.GetNodes().Aggregate("", (current, node) => current + node.Item1 + "\n"));
+        }
+
+        private void algorithmsList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //codeEditorPanel.Controls.Clear();
             playerPanel.Controls.Clear();
 
-            IAlgorithm algorithm = Program.Algorithms[algorithmsList.SelectedIndex];
-            codeEditorPanel.Controls.Add(algorithm.Input);
+            var algorithm = Program.Algorithms[algorithmsList.Text];
+
+            //codeEditorPanel.Controls.Add(algorithm.Input);
+            authorLabel.Text = algorithm.Author;
+            descriptionLabel.Text = algorithm.Description;
+        }
+
+        private async void openFileButton_Click(object sender, EventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Text and DOT files|*.txt;*.dot",
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+            try
+            {
+                Program.Editor.Text = await new StreamReader(dialog.FileName).ReadToEndAsync();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Could not read the file.");
+            }
+        }
+
+        private void newButton_Click(object sender, EventArgs e)
+        {
+            Program.Editor.Clear();
         }
     }
 }
