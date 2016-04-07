@@ -59,6 +59,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\DotParserProject\DotParserProject\DotParserProject.fsproj">
+      <Project>{8826810a-dc59-46e6-8978-21e273db1236}</Project>
+      <Name>DotParserProject</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\QuickGraph\QuickGraph.csproj">
       <Project>{a9a5c115-0680-44b3-a87e-5ecf4c93814e}</Project>
       <Name>QuickGraph</Name>

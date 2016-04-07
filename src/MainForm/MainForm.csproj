@@ -35,7 +35,7 @@
   <ItemGroup>
     <Reference Include="DotParserProject, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\GraphTaskBin\Debug\DotParserProject.dll</HintPath>
+      <HintPath>..\DotParserProject\DotParserProject\bin\Debug\DotParserProject.dll</HintPath>
     </Reference>
     <Reference Include="ICSharpCode.AvalonEdit, Version=5.0.1.0, Culture=neutral, PublicKeyToken=9cc39be672370310, processorArchitecture=MSIL">
       <HintPath>..\..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>

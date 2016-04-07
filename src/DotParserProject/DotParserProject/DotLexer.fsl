@@ -1,5 +1,5 @@
 ﻿{
-module DotParserProject.DotLexer
+module DotParserProject.Gen.DotLexer
 
 open DotParserProject.DotParser
 open Microsoft.FSharp.Text.Lexing
@@ -20,19 +20,18 @@ let keywords =
 
 let digit = ['0'-'9']
 let whitespace = [' ' '\t' '\r' '\n']
-let separator = ';'
 let id = ['a'-'z' 'A'-'Z' '_'](['a'-'z' 'A'-'Z' '_' '0'-'9'])*|['-']?('.'['0'-'9']+|['0'-'9']+('.'['0'-'9']+)?)
 
 rule tokenize = parse
 | whitespace { tokenize lexbuf }
-| separator { SEP <| lexeme lexbuf }
-| "\"" { ID ( (string lexbuf.StartPos "" lexbuf) ) }
+| '"' { ID ( (string lexbuf.StartPos "" lexbuf) ) }
 | '[' { LSQBRACE <| lexeme lexbuf }
 | ']' { RSQBRACE <| lexeme lexbuf }
 | '{' { LCURBRACE <| lexeme lexbuf }
 | '}' { RCURBRACE <| lexeme lexbuf }
 | '=' { ASSIGN <| lexeme lexbuf }
 | ':' { COL <| lexeme lexbuf }
+| ';' { SEMI <| lexeme lexbuf }
 | ',' { COMMA <| lexeme lexbuf }
 | "--" { EDGEOP <| lexeme lexbuf }
 | "->" { DIEDGEOP <| lexeme lexbuf }

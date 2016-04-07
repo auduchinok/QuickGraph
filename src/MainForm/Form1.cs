@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using QuickGraph;
 
 namespace MainForm
 {
@@ -18,7 +19,8 @@ namespace MainForm
             //Program.CurrentAlgorithm.Run(); // todo: send graph parsed from dot
 
             var graph = DotLangParser.parse(Program.Editor.Text);
-            MessageBox.Show(graph.GetNodes().Aggregate("", (current, node) => current + node.Item1 + "\n"));
+            MessageBox.Show(graph.Vertices.Aggregate("", (current, vertex) => current + vertex + "\n"));
+            //MessageBox.Show(graph.GetNodes().Aggregate("", (current, node) => current + node.Item1 + "\n"));
         }
 
         private void algorithmsList_SelectedIndexChanged(object sender, EventArgs e)

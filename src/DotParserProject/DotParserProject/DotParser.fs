@@ -8,13 +8,14 @@ open Yard.Generators.RNGLR.AST
 
 # 1 "DotGrammar.yrd"
 
+open DotParserProject.GraphData
+open Option
 open System.Collections.Generic
-open DotParserProject.GraphDataContainer
+open QuickGraph
 
-let graphs = new ResizeArray<GraphDataContainer>()
+let mutable data = new GraphData()
 
-
-# 17 "DotParser.fs"
+# 18 "DotParser.fs"
 type Token =
     | ASSIGN of (string)
     | COL of (string)
@@ -31,7 +32,7 @@ type Token =
     | RCURBRACE of (string)
     | RNGLR_EOF of (string)
     | RSQBRACE of (string)
-    | SEP of (string)
+    | SEMI of (string)
     | STRICT of (string)
     | SUBGR of (string)
 
@@ -54,7 +55,7 @@ let tokenData = function
     | RCURBRACE x -> box x
     | RNGLR_EOF x -> box x
     | RSQBRACE x -> box x
-    | SEP x -> box x
+    | SEMI x -> box x
     | STRICT x -> box x
     | SUBGR x -> box x
 
@@ -62,84 +63,80 @@ let numToString = function
     | 0 -> "a_list"
     | 1 -> "attr_list"
     | 2 -> "attr_stmt"
-    | 3 -> "compass_pt"
-    | 4 -> "edge_operator"
-    | 5 -> "edge_stmt"
+    | 3 -> "edgeRHS"
+    | 4 -> "edge_stmt"
+    | 5 -> "edgeop"
     | 6 -> "error"
     | 7 -> "graph"
-    | 8 -> "id"
+    | 8 -> "graph_type"
     | 9 -> "node_id"
     | 10 -> "node_stmt"
     | 11 -> "port"
     | 12 -> "stmt"
     | 13 -> "stmt_list"
     | 14 -> "subgraph"
-    | 15 -> "yard_exp_brackets_367"
-    | 16 -> "yard_exp_brackets_368"
-    | 17 -> "yard_exp_brackets_369"
-    | 18 -> "yard_exp_brackets_370"
-    | 19 -> "yard_exp_brackets_371"
-    | 20 -> "yard_exp_brackets_372"
-    | 21 -> "yard_exp_brackets_373"
-    | 22 -> "yard_exp_brackets_374"
-    | 23 -> "yard_exp_brackets_375"
-    | 24 -> "yard_exp_brackets_376"
-    | 25 -> "yard_many_119"
-    | 26 -> "yard_many_120"
-    | 27 -> "yard_many_121"
-    | 28 -> "yard_many_122"
-    | 29 -> "yard_opt_154"
-    | 30 -> "yard_opt_155"
-    | 31 -> "yard_opt_156"
-    | 32 -> "yard_opt_157"
-    | 33 -> "yard_opt_158"
-    | 34 -> "yard_opt_159"
-    | 35 -> "yard_opt_160"
-    | 36 -> "yard_rule_362"
-    | 37 -> "yard_rule_364"
-    | 38 -> "yard_rule_365"
-    | 39 -> "yard_rule_list_363"
-    | 40 -> "yard_rule_list_366"
-    | 41 -> "yard_start_rule"
-    | 42 -> "ASSIGN"
-    | 43 -> "COL"
-    | 44 -> "COMMA"
-    | 45 -> "DIEDGEOP"
-    | 46 -> "DIGRAPH"
-    | 47 -> "EDGE"
-    | 48 -> "EDGEOP"
-    | 49 -> "GRAPH"
-    | 50 -> "ID"
-    | 51 -> "LCURBRACE"
-    | 52 -> "LSQBRACE"
-    | 53 -> "NODE"
-    | 54 -> "RCURBRACE"
-    | 55 -> "RNGLR_EOF"
-    | 56 -> "RSQBRACE"
-    | 57 -> "SEP"
-    | 58 -> "STRICT"
-    | 59 -> "SUBGR"
+    | 15 -> "yard_exp_brackets_326"
+    | 16 -> "yard_exp_brackets_327"
+    | 17 -> "yard_exp_brackets_328"
+    | 18 -> "yard_exp_brackets_329"
+    | 19 -> "yard_exp_brackets_330"
+    | 20 -> "yard_exp_brackets_331"
+    | 21 -> "yard_exp_brackets_332"
+    | 22 -> "yard_many_8"
+    | 23 -> "yard_many_9"
+    | 24 -> "yard_opt_799"
+    | 25 -> "yard_opt_800"
+    | 26 -> "yard_opt_801"
+    | 27 -> "yard_opt_802"
+    | 28 -> "yard_opt_803"
+    | 29 -> "yard_opt_804"
+    | 30 -> "yard_opt_805"
+    | 31 -> "yard_opt_806"
+    | 32 -> "yard_opt_807"
+    | 33 -> "yard_opt_808"
+    | 34 -> "yard_opt_809"
+    | 35 -> "yard_opt_810"
+    | 36 -> "yard_opt_811"
+    | 37 -> "yard_start_rule"
+    | 38 -> "ASSIGN"
+    | 39 -> "COL"
+    | 40 -> "COMMA"
+    | 41 -> "DIEDGEOP"
+    | 42 -> "DIGRAPH"
+    | 43 -> "EDGE"
+    | 44 -> "EDGEOP"
+    | 45 -> "GRAPH"
+    | 46 -> "ID"
+    | 47 -> "LCURBRACE"
+    | 48 -> "LSQBRACE"
+    | 49 -> "NODE"
+    | 50 -> "RCURBRACE"
+    | 51 -> "RNGLR_EOF"
+    | 52 -> "RSQBRACE"
+    | 53 -> "SEMI"
+    | 54 -> "STRICT"
+    | 55 -> "SUBGR"
     | _ -> ""
 
 let tokenToNumber = function
-    | ASSIGN _ -> 42
-    | COL _ -> 43
-    | COMMA _ -> 44
-    | DIEDGEOP _ -> 45
-    | DIGRAPH _ -> 46
-    | EDGE _ -> 47
-    | EDGEOP _ -> 48
-    | GRAPH _ -> 49
-    | ID _ -> 50
-    | LCURBRACE _ -> 51
-    | LSQBRACE _ -> 52
-    | NODE _ -> 53
-    | RCURBRACE _ -> 54
-    | RNGLR_EOF _ -> 55
-    | RSQBRACE _ -> 56
-    | SEP _ -> 57
-    | STRICT _ -> 58
-    | SUBGR _ -> 59
+    | ASSIGN _ -> 38
+    | COL _ -> 39
+    | COMMA _ -> 40
+    | DIEDGEOP _ -> 41
+    | DIGRAPH _ -> 42
+    | EDGE _ -> 43
+    | EDGEOP _ -> 44
+    | GRAPH _ -> 45
+    | ID _ -> 46
+    | LCURBRACE _ -> 47
+    | LSQBRACE _ -> 48
+    | NODE _ -> 49
+    | RCURBRACE _ -> 50
+    | RNGLR_EOF _ -> 51
+    | RSQBRACE _ -> 52
+    | SEMI _ -> 53
+    | STRICT _ -> 54
+    | SUBGR _ -> 55
 
 let isLiteral = function
     | ASSIGN _ -> false
@@ -157,28 +154,28 @@ let isLiteral = function
     | RCURBRACE _ -> false
     | RNGLR_EOF _ -> false
     | RSQBRACE _ -> false
-    | SEP _ -> false
+    | SEMI _ -> false
     | STRICT _ -> false
     | SUBGR _ -> false
 
 let getLiteralNames = []
 let mutable private cur = 0
-let leftSide = [|24; 23; 22; 22; 21; 21; 20; 19; 18; 17; 17; 17; 16; 15; 15; 8; 3; 34; 34; 35; 35; 14; 33; 33; 11; 32; 32; 9; 10; 4; 37; 37; 38; 28; 28; 40; 40; 5; 36; 27; 27; 39; 39; 0; 26; 26; 1; 2; 12; 12; 12; 12; 12; 25; 25; 31; 31; 13; 30; 30; 29; 29; 7; 41|]
-let private rules = [|59; 35; 43; 3; 43; 8; 33; 43; 3; 48; 45; 38; 37; 44; 36; 52; 0; 56; 49; 53; 47; 12; 31; 49; 46; 50; 50; 24; 8; 34; 51; 13; 54; 23; 22; 11; 8; 32; 9; 1; 21; 9; 14; 4; 20; 28; 37; 28; 40; 1; 8; 42; 8; 19; 27; 36; 27; 39; 18; 26; 26; 17; 1; 10; 5; 2; 8; 42; 8; 14; 16; 25; 57; 25; 8; 58; 29; 15; 30; 51; 13; 54; 7|]
-let private rulesStart = [|0; 2; 4; 7; 9; 10; 11; 13; 15; 18; 19; 20; 21; 23; 24; 25; 26; 27; 27; 28; 28; 29; 33; 33; 34; 35; 35; 36; 38; 40; 41; 42; 43; 44; 44; 46; 46; 48; 50; 53; 53; 55; 55; 57; 58; 58; 60; 61; 63; 64; 65; 66; 69; 70; 70; 72; 72; 73; 74; 74; 75; 75; 76; 82; 83|]
-let startRule = 63
+let leftSide = [|21; 20; 20; 19; 19; 18; 18; 17; 16; 16; 16; 15; 35; 35; 36; 36; 14; 5; 5; 11; 34; 34; 9; 33; 33; 10; 32; 32; 3; 31; 31; 4; 30; 30; 29; 29; 0; 23; 23; 28; 28; 1; 2; 12; 12; 12; 12; 12; 22; 22; 27; 27; 13; 26; 26; 25; 25; 8; 8; 24; 24; 7; 37|]
+let private rules = [|55; 36; 9; 14; 9; 14; 40; 53; 48; 28; 52; 45; 49; 43; 12; 27; 21; 46; 35; 47; 13; 50; 44; 41; 39; 46; 11; 46; 34; 1; 9; 33; 3; 5; 20; 32; 1; 19; 3; 31; 0; 18; 46; 38; 46; 29; 30; 17; 23; 0; 23; 16; 1; 10; 4; 2; 46; 38; 46; 14; 15; 22; 53; 22; 54; 54; 25; 45; 26; 42; 46; 8; 24; 47; 13; 50; 7|]
+let private rulesStart = [|0; 2; 3; 4; 5; 6; 7; 8; 11; 12; 13; 14; 16; 16; 17; 17; 18; 22; 23; 24; 26; 26; 27; 29; 29; 30; 32; 32; 33; 36; 36; 37; 40; 40; 41; 41; 42; 47; 47; 49; 49; 50; 51; 53; 54; 55; 56; 59; 60; 60; 62; 62; 63; 64; 64; 65; 65; 66; 68; 70; 70; 71; 76; 77|]
+let startRule = 62
 
 let acceptEmptyInput = false
 
 let defaultAstToDot =
     (fun (tree : Yard.Generators.RNGLR.AST.Tree<Token>) -> tree.AstToDot numToString tokenToNumber leftSide)
 
-let private lists_gotos = [|1; 2; 83; 3; 81; 82; 4; 5; 15; 6; 7; 8; 9; 25; 43; 44; 47; 49; 50; 51; 53; 59; 55; 60; 76; 78; 79; 80; 70; 10; 11; 12; 13; 16; 14; 17; 18; 24; 19; 20; 21; 22; 23; 26; 27; 42; 29; 28; 30; 32; 35; 41; 31; 33; 34; 36; 40; 38; 37; 39; 45; 46; 48; 54; 52; 56; 57; 58; 61; 62; 63; 75; 65; 73; 74; 64; 66; 67; 68; 69; 71; 72; 77|]
+let private lists_gotos = [|1; 2; 70; 72; 74; 3; 69; 4; 5; 6; 7; 26; 27; 30; 32; 33; 34; 36; 48; 53; 49; 54; 55; 56; 63; 64; 8; 9; 24; 25; 11; 10; 12; 13; 15; 14; 16; 17; 18; 19; 22; 23; 20; 21; 28; 29; 31; 68; 35; 37; 40; 46; 47; 38; 39; 41; 42; 43; 67; 44; 45; 50; 51; 52; 57; 58; 59; 61; 60; 62; 65; 66; 71; 73|]
 let private small_gotos =
-        [|3; 458752; 1900545; 3801090; 131075; 983043; 3014660; 3211269; 196611; 524294; 1966087; 3276808; 327681; 3342345; 393236; 131082; 327691; 524300; 589837; 655374; 786447; 851984; 917521; 1048594; 1114131; 1572884; 1638421; 2228246; 2424855; 2621464; 3080217; 3211290; 3276808; 3473435; 3866652; 589829; 720925; 1441822; 2097183; 2752544; 2818081; 851970; 524322; 3276808; 1048579; 196643; 524324; 3276837; 1179651; 1507366; 2162727; 2818088; 1376258; 196649; 3276842; 1638404; 65579; 1179692; 1703981; 3407918; 1769475; 1179692; 1703983; 3407918; 1900549; 48; 524337; 2359346; 2555955; 3276808; 1966081; 3670068; 2097153; 2752565; 2162690; 524342; 3276808; 2293763; 1245239; 1769528; 2883641; 2359299; 1245239; 1769530; 2883641; 2490371; 524337; 2359355; 3276808; 2883586; 2031676; 3735613; 3080193; 3539006; 3276819; 131082; 327691; 524300; 589837; 655374; 786447; 917521; 1048594; 1114131; 1572884; 1638463; 2228246; 2424855; 2621464; 3080217; 3211290; 3276808; 3473435; 3866652; 3342340; 65600; 1179692; 1703981; 3407918; 3604481; 3342401; 3670036; 131082; 327691; 524300; 589837; 655374; 786447; 852034; 917521; 1048594; 1114131; 1572884; 1638421; 2228246; 2424855; 2621464; 3080217; 3211290; 3276808; 3473435; 3866652; 3735553; 3539011; 3932167; 262212; 1310789; 1376326; 1835079; 2490440; 2949193; 3145802; 4063239; 262212; 1310789; 1376326; 1835083; 2490440; 2949193; 3145802; 4259848; 524364; 589901; 917582; 1572884; 2228246; 2424911; 3276808; 3866652; 4325380; 720925; 1441822; 2097183; 2818081; 4587523; 524368; 2293841; 3276808; 4980740; 65618; 1179692; 1703981; 3407918|]
-let gotos = Array.zeroCreate 84
-for i = 0 to 83 do
-        gotos.[i] <- Array.zeroCreate 60
+        [|5; 458752; 524289; 1638402; 1703939; 3538948; 131074; 1572869; 3014662; 196609; 3080199; 262162; 131080; 262153; 589834; 655371; 786444; 851981; 917518; 983055; 1048592; 1245201; 1376274; 1441811; 2293780; 2818069; 2949142; 3014679; 3211288; 3604505; 458757; 65562; 1114139; 1507356; 2162717; 3145758; 589827; 1114139; 1507359; 3145758; 720899; 32; 1835041; 3014690; 851969; 3407907; 983041; 2490404; 1048577; 3014693; 1114116; 1179686; 1900583; 2621480; 3473449; 1245187; 42; 1966123; 3014690; 1769474; 1769516; 3473453; 1966081; 3276846; 2162705; 131080; 262153; 589834; 655371; 786444; 917518; 983055; 1048592; 1245201; 1376274; 1441839; 2293780; 2818069; 2949142; 3014679; 3211288; 3604505; 2228228; 65584; 1114139; 1507356; 3145758; 2359300; 196657; 327730; 2687027; 2883636; 2424837; 65589; 1114139; 1507356; 2031670; 3145758; 2621447; 589879; 917560; 1310777; 1376274; 2293780; 3014714; 3604505; 2818053; 196667; 327730; 2097212; 2687027; 2883636; 3211265; 3080253; 3276818; 131080; 262153; 589834; 655371; 786444; 852030; 917518; 983055; 1048592; 1245201; 1376274; 1441811; 2293780; 2818069; 2949142; 3014679; 3211288; 3604505; 3342337; 3276863; 3670020; 720960; 2228289; 2490434; 2555971; 3866625; 3014724; 3997697; 3014725; 4194306; 2359366; 3014727; 4390915; 720960; 2228289; 2555971; 4587521; 2949192; 4718593; 2752585|]
+let gotos = Array.zeroCreate 75
+for i = 0 to 74 do
+        gotos.[i] <- Array.zeroCreate 56
 cur <- 0
 while cur < small_gotos.Length do
     let i = small_gotos.[cur] >>> 16
@@ -189,12 +186,12 @@ while cur < small_gotos.Length do
         let x = small_gotos.[cur + k] &&& 65535
         gotos.[i].[j] <- lists_gotos.[x]
     cur <- cur + length
-let private lists_reduces = [|[|59,1|]; [|50,1|]; [|49,1|]; [|27,1|]; [|26,1|]; [|24,1|]; [|27,2|]; [|51,3|]; [|15,1|]; [|3,2|]; [|2,2|]; [|23,1|]; [|2,3|]; [|1,2|]; [|16,1|]; [|16,1; 15,1|]; [|30,1|]; [|30,1; 28,1|]; [|28,2|]; [|45,1|]; [|45,2|]; [|8,3|]; [|38,3|]; [|42,1|]; [|40,1|]; [|40,2|]; [|7,2|]; [|42,2|]; [|43,1|]; [|46,1|]; [|48,1|]; [|12,1|]; [|12,2|]; [|56,1|]; [|62,6|]; [|31,1|]; [|52,1; 31,1|]; [|54,1|]; [|47,1|]; [|47,2|]; [|18,1|]; [|54,2|]; [|21,4|]; [|57,1|]; [|36,1|]; [|32,1|]; [|34,1|]; [|29,1|]; [|34,2|]; [|6,2|]; [|0,1|]; [|20,1|]; [|0,2|]; [|5,1|]; [|4,1|]; [|36,2|]; [|37,1|]; [|37,2|]; [|11,1|]; [|9,1|]; [|10,1|]; [|14,1|]; [|13,1|]; [|61,1|]|]
+let private lists_reduces = [|[|45,1|]; [|44,1|]; [|3,1|]; [|25,1|]; [|24,1|]; [|38,1|]; [|38,2|]; [|40,1|]; [|7,3|]; [|36,3|]; [|35,1|]; [|36,4|]; [|33,1|]; [|36,5|]; [|5,1|]; [|6,1|]; [|41,1|]; [|25,2|]; [|43,1|]; [|11,1|]; [|11,2|]; [|51,1|]; [|61,5|]; [|4,1|]; [|47,1|]; [|49,1|]; [|42,1|]; [|42,2|]; [|31,2|]; [|30,1|]; [|31,3|]; [|1,1|]; [|2,1|]; [|28,2|]; [|27,1|]; [|28,3|]; [|18,1|]; [|17,1|]; [|13,1|]; [|16,4|]; [|52,1|]; [|10,1|]; [|8,1|]; [|22,1|]; [|21,1|]; [|22,2|]; [|46,3|]; [|19,2|]; [|9,1|]; [|0,1|]; [|0,2|]; [|15,1|]; [|49,2|]; [|60,1|]; [|57,2|]; [|58,2|]; [|54,1|]; [|56,1|]|]
 let private small_reduces =
-        [|262145; 3342336; 458761; 3080193; 3211265; 3276801; 3342337; 3407873; 3473409; 3538945; 3735553; 3866625; 524297; 3080194; 3211266; 3276802; 3342338; 3407874; 3473410; 3538946; 3735554; 3866626; 589835; 2949123; 3080195; 3145731; 3211267; 3276803; 3342339; 3407875; 3473411; 3538947; 3735555; 3866627; 655371; 2949124; 3080196; 3145732; 3211268; 3276804; 3342340; 3407876; 3473412; 3538948; 3735556; 3866628; 720907; 2949125; 3080197; 3145733; 3211269; 3276805; 3342341; 3407877; 3473413; 3538949; 3735557; 3866629; 786443; 2949126; 3080198; 3145734; 3211270; 3276806; 3342342; 3407878; 3473414; 3538950; 3735558; 3866630; 917513; 3080199; 3211271; 3276807; 3342343; 3407879; 3473415; 3538951; 3735559; 3866631; 983055; 2752520; 2818056; 2883592; 2949128; 3080200; 3145736; 3211272; 3276808; 3342344; 3407880; 3473416; 3538952; 3670024; 3735560; 3866632; 1114123; 2949129; 3080201; 3145737; 3211273; 3276809; 3342345; 3407881; 3473417; 3538953; 3735561; 3866633; 1179659; 2949130; 3080202; 3145738; 3211274; 3276810; 3342346; 3407882; 3473418; 3538954; 3735562; 3866634; 1245195; 2949131; 3080203; 3145739; 3211275; 3276811; 3342347; 3407883; 3473419; 3538955; 3735563; 3866635; 1310731; 2949132; 3080204; 3145740; 3211276; 3276812; 3342348; 3407884; 3473420; 3538956; 3735564; 3866636; 1441803; 2949133; 3080205; 3145741; 3211277; 3276813; 3342349; 3407885; 3473421; 3538957; 3735565; 3866637; 1507339; 2949134; 3080206; 3145742; 3211278; 3276814; 3342350; 3407886; 3473422; 3538958; 3735566; 3866638; 1572876; 2818056; 2949135; 3080207; 3145743; 3211279; 3276815; 3342351; 3407887; 3473423; 3538959; 3735567; 3866639; 1638411; 2949136; 3080209; 3145744; 3211281; 3276817; 3342353; 3407889; 3473425; 3538961; 3735569; 3866641; 1703945; 3080210; 3211282; 3276818; 3342354; 3407890; 3473426; 3538962; 3735570; 3866642; 1769481; 3080211; 3211283; 3276819; 3342355; 3407891; 3473427; 3538963; 3735571; 3866643; 1835017; 3080212; 3211284; 3276820; 3342356; 3407892; 3473428; 3538964; 3735572; 3866644; 2031625; 3080213; 3211285; 3276821; 3342357; 3407893; 3473429; 3538965; 3735573; 3866645; 2228226; 2883606; 3670038; 2293761; 3670039; 2359297; 3670040; 2424833; 3670041; 2555906; 2883610; 3670042; 2621441; 3670043; 2686977; 3670044; 2752521; 3080221; 3211293; 3276829; 3342365; 3407901; 3473437; 3538973; 3735581; 3866653; 2818057; 3080222; 3211294; 3276830; 3342366; 3407902; 3473438; 3538974; 3735582; 3866654; 2883593; 3080223; 3211295; 3276831; 3342367; 3407903; 3473439; 3538975; 3735583; 3866655; 2949129; 3080224; 3211296; 3276832; 3342368; 3407904; 3473440; 3538976; 3735584; 3866656; 3014665; 3080225; 3211297; 3276833; 3342369; 3407905; 3473441; 3538977; 3735585; 3866657; 3145729; 3604514; 3211275; 2949155; 3080228; 3145763; 3211300; 3276836; 3342372; 3407908; 3473444; 3538980; 3735588; 3866660; 3276801; 3538981; 3342345; 3080230; 3211302; 3276838; 3342374; 3407910; 3473446; 3538982; 3735590; 3866662; 3407881; 3080231; 3211303; 3276839; 3342375; 3407911; 3473447; 3538983; 3735591; 3866663; 3473409; 3342376; 3538945; 3538985; 3801099; 2949162; 3080234; 3145770; 3211306; 3276842; 3342378; 3407914; 3473450; 3538986; 3735594; 3866666; 3866625; 3538987; 3932169; 3080236; 3211308; 3276844; 3342380; 3407916; 3473452; 3538988; 3735596; 3866668; 3997699; 3276845; 3342381; 3866669; 4063241; 3080238; 3211310; 3276846; 3342382; 3407918; 3473454; 3538990; 3735598; 3866670; 4128771; 3276847; 3342383; 3866671; 4194313; 3080240; 3211312; 3276848; 3342384; 3407920; 3473456; 3538992; 3735600; 3866672; 4325387; 2949123; 3080195; 3145731; 3211267; 3276803; 3342339; 3407875; 3473411; 3538947; 3735555; 3866627; 4390923; 2949136; 3080208; 3145744; 3211280; 3276816; 3342352; 3407888; 3473424; 3538960; 3735568; 3866640; 4456459; 2949155; 3080227; 3145763; 3211299; 3276835; 3342371; 3407907; 3473443; 3538979; 3735587; 3866659; 4521995; 2949169; 3080241; 3145777; 3211313; 3276849; 3342385; 3407921; 3473457; 3538993; 3735601; 3866673; 4587521; 3342386; 4653057; 3342387; 4718593; 3342388; 4784131; 3276853; 3342389; 3866677; 4849667; 3276854; 3342390; 3866678; 4915209; 3080247; 3211319; 3276855; 3342391; 3407927; 3473463; 3538999; 3735607; 3866679; 4980745; 3080248; 3211320; 3276856; 3342392; 3407928; 3473464; 3539000; 3735608; 3866680; 5046281; 3080249; 3211321; 3276857; 3342393; 3407929; 3473465; 3539001; 3735609; 3866681; 5111817; 3080250; 3211322; 3276858; 3342394; 3407930; 3473466; 3539002; 3735610; 3866682; 5177353; 3080251; 3211323; 3276859; 3342395; 3407931; 3473467; 3539003; 3735611; 3866683; 5242889; 3080252; 3211324; 3276860; 3342396; 3407932; 3473468; 3539004; 3735612; 3866684; 5308418; 3276861; 3342397; 5373954; 3276862; 3342398; 5439490; 3014719; 3211327|]
-let reduces = Array.zeroCreate 84
-for i = 0 to 83 do
-        reduces.[i] <- Array.zeroCreate 60
+        [|327688; 2818048; 2949120; 3014656; 3080192; 3211264; 3276800; 3473408; 3604480; 393224; 2818049; 2949121; 3014657; 3080193; 3211265; 3276801; 3473409; 3604481; 458762; 2686978; 2818051; 2883586; 2949123; 3014659; 3080195; 3211267; 3276803; 3473411; 3604483; 524296; 2818052; 2949124; 3014660; 3080196; 3211268; 3276804; 3473412; 3604484; 589832; 2818053; 2949125; 3014661; 3080197; 3211269; 3276805; 3473413; 3604485; 655368; 2818054; 2949126; 3014662; 3080198; 3211270; 3276806; 3473414; 3604486; 786433; 3407879; 917513; 2818056; 2949128; 3014664; 3080200; 3145736; 3211272; 3276808; 3473416; 3604488; 1114113; 3407881; 1179650; 3014666; 3407882; 1245185; 3407883; 1310721; 3407884; 1376257; 3407885; 1441794; 3014670; 3407886; 1507330; 3014671; 3407887; 1572872; 2818064; 2949136; 3014672; 3080208; 3211280; 3276816; 3473424; 3604496; 1638408; 2818065; 2949137; 3014673; 3080209; 3211281; 3276817; 3473425; 3604497; 1703944; 2818066; 2949138; 3014674; 3080210; 3211282; 3276818; 3473426; 3604498; 1769479; 2818067; 2949139; 3014675; 3080211; 3211283; 3276819; 3604499; 1835015; 2818068; 2949140; 3014676; 3080212; 3211284; 3276820; 3604500; 1900551; 2818069; 2949141; 3014677; 3080213; 3211285; 3276821; 3604501; 2031617; 3342358; 2097162; 2686999; 2818072; 2883607; 2949144; 3014680; 3080216; 3211288; 3276824; 3473432; 3604504; 2162689; 3276825; 2228232; 2818074; 2949146; 3014682; 3080218; 3211290; 3276826; 3473434; 3604506; 2293768; 2818075; 2949147; 3014683; 3080219; 3211291; 3276827; 3473435; 3604507; 2424840; 2818076; 2949148; 3014684; 3080220; 3211292; 3276828; 3473436; 3604508; 2490376; 2818077; 2949149; 3014685; 3080221; 3211293; 3276829; 3473437; 3604509; 2555912; 2818078; 2949150; 3014686; 3080222; 3211294; 3276830; 3473438; 3604510; 2686987; 2687007; 2818079; 2883615; 2949151; 3014687; 3080223; 3145759; 3211295; 3276831; 3473439; 3604511; 2752523; 2687008; 2818080; 2883616; 2949152; 3014688; 3080224; 3145760; 3211296; 3276832; 3473440; 3604512; 2818057; 2818081; 2949153; 3014689; 3080225; 3145761; 3211297; 3276833; 3473441; 3604513; 2883593; 2818082; 2949154; 3014690; 3080226; 3145762; 3211298; 3276834; 3473442; 3604514; 2949129; 2818083; 2949155; 3014691; 3080227; 3145763; 3211299; 3276835; 3473443; 3604515; 3014659; 3014692; 3080228; 3604516; 3080195; 3014693; 3080229; 3604517; 3145729; 3080230; 3407883; 2687015; 2818087; 2883623; 2949159; 3014695; 3080231; 3145767; 3211303; 3276839; 3473447; 3604519; 3473409; 3276840; 3538953; 2818089; 2949161; 3014697; 3080233; 3145769; 3211305; 3276841; 3473449; 3604521; 3604489; 2818090; 2949162; 3014698; 3080234; 3145770; 3211306; 3276842; 3473450; 3604522; 3670027; 2687019; 2818091; 2883627; 2949163; 3014699; 3080235; 3145771; 3211307; 3276843; 3473451; 3604523; 3735563; 2687020; 2818092; 2883628; 2949164; 3014700; 3080236; 3145772; 3211308; 3276844; 3473452; 3604524; 3801099; 2687021; 2818093; 2883629; 2949165; 3014701; 3080237; 3145773; 3211309; 3276845; 3473453; 3604525; 3932168; 2818094; 2949166; 3014702; 3080238; 3211310; 3276846; 3473454; 3604526; 4063243; 2687023; 2818095; 2883631; 2949167; 3014703; 3080239; 3145775; 3211311; 3276847; 3473455; 3604527; 4128777; 2818096; 2949168; 3014704; 3080240; 3145776; 3211312; 3276848; 3473456; 3604528; 4194305; 3080241; 4259841; 3080242; 4325377; 3080243; 4390923; 2687019; 2818091; 2883627; 2949163; 3014699; 3080235; 3145771; 3211307; 3276843; 3473451; 3604523; 4456449; 3276852; 4521985; 3080245; 4653058; 3014710; 3080246; 4784130; 3014711; 3080247; 4849666; 2752568; 2949177|]
+let reduces = Array.zeroCreate 75
+for i = 0 to 74 do
+        reduces.[i] <- Array.zeroCreate 56
 cur <- 0
 while cur < small_reduces.Length do
     let i = small_reduces.[cur] >>> 16
@@ -205,12 +202,12 @@ while cur < small_reduces.Length do
         let x = small_reduces.[cur + k] &&& 65535
         reduces.[i].[j] <- lists_reduces.[x]
     cur <- cur + length
-let private lists_zeroReduces = [|[|60|]; [|58|]; [|49; 37; 35; 12|]; [|49; 37; 35; 17; 12|]; [|57; 54; 53; 49; 37; 35; 12|]; [|25|]; [|22|]; [|46; 44|]; [|44|]; [|43; 41|]; [|39|]; [|55|]; [|54; 53; 49; 37; 35; 12|]; [|33|]; [|17|]; [|19|]|]
+let private lists_zeroReduces = [|[|53|]; [|55|]; [|59|]; [|12|]; [|52; 48|]; [|41; 37; 24; 23|]; [|37|]; [|39|]; [|34|]; [|32|]; [|50|]; [|48|]; [|41; 37|]; [|41; 37; 30; 29|]; [|26|]; [|20|]; [|14|]|]
 let private small_zeroReduces =
-        [|2; 3014656; 3211264; 196609; 3342337; 393225; 3080194; 3211266; 3276802; 3342339; 3407874; 3473410; 3538948; 3735554; 3866626; 589835; 2949125; 3080197; 3145733; 3211269; 3276805; 3342341; 3407877; 3473413; 3538949; 3735557; 3866629; 1179659; 2949126; 3080198; 3145734; 3211270; 3276806; 3342342; 3407878; 3473414; 3538950; 3735558; 3866630; 1638409; 3080199; 3211271; 3276807; 3342343; 3407879; 3473415; 3538951; 3735559; 3866631; 1769481; 3080200; 3211272; 3276808; 3342344; 3407880; 3473416; 3538952; 3735560; 3866632; 1900545; 3670025; 2293761; 3670026; 2359297; 3670026; 2883593; 3080203; 3211275; 3276811; 3342347; 3407883; 3473419; 3538955; 3735563; 3866635; 3276809; 3080194; 3211266; 3276802; 3342339; 3407874; 3473410; 3538956; 3735554; 3866626; 3342345; 3080199; 3211271; 3276807; 3342343; 3407879; 3473415; 3538951; 3735559; 3866631; 3670025; 3080194; 3211266; 3276802; 3342339; 3407874; 3473410; 3538948; 3735554; 3866626; 3932169; 3080205; 3211277; 3276813; 3342349; 3407885; 3473421; 3538957; 3735565; 3866637; 4063241; 3080205; 3211277; 3276813; 3342349; 3407885; 3473421; 3538957; 3735565; 3866637; 4259841; 3342350; 4325387; 2949125; 3080197; 3145733; 3211269; 3276805; 3342341; 3407877; 3473413; 3538949; 3735557; 3866629; 4587521; 3342351; 4980745; 3080199; 3211271; 3276807; 3342343; 3407879; 3473415; 3538951; 3735559; 3866631|]
-let zeroReduces = Array.zeroCreate 84
-for i = 0 to 83 do
-        zeroReduces.[i] <- Array.zeroCreate 60
+        [|2; 2752512; 2949121; 131073; 3080194; 262146; 3080195; 3276804; 458760; 2818053; 2949125; 3014661; 3080197; 3211269; 3276805; 3473413; 3604485; 589832; 2818054; 2949126; 3014662; 3080198; 3211270; 3276806; 3473414; 3604486; 720897; 3407879; 1114114; 3014664; 3407880; 1245185; 3407881; 1769479; 2818058; 2949130; 3014666; 3080202; 3211274; 3276810; 3604490; 2162690; 3080195; 3276811; 2228232; 2818060; 2949132; 3014668; 3080204; 3211276; 3276812; 3473420; 3604492; 2424840; 2818061; 2949133; 3014669; 3080205; 3211277; 3276813; 3473421; 3604493; 2621441; 3080195; 2818057; 2818062; 2949134; 3014670; 3080206; 3145742; 3211278; 3276814; 3473422; 3604494; 3276802; 3080195; 3276804; 3670027; 2686991; 2818063; 2883599; 2949135; 3014671; 3080207; 3145743; 3211279; 3276815; 3473423; 3604495; 4194305; 3080208; 4390923; 2686991; 2818063; 2883599; 2949135; 3014671; 3080207; 3145743; 3211279; 3276815; 3473423; 3604495|]
+let zeroReduces = Array.zeroCreate 75
+for i = 0 to 74 do
+        zeroReduces.[i] <- Array.zeroCreate 56
 cur <- 0
 while cur < small_zeroReduces.Length do
     let i = small_zeroReduces.[cur] >>> 16
@@ -222,341 +219,227 @@ while cur < small_zeroReduces.Length do
         zeroReduces.[i].[j] <- lists_zeroReduces.[x]
     cur <- cur + length
 let private small_acc = [1]
-let private accStates = Array.zeroCreate 84
-for i = 0 to 83 do
+let private accStates = Array.zeroCreate 75
+for i = 0 to 74 do
         accStates.[i] <- List.exists ((=) i) small_acc
-let eofIndex = 55
+let eofIndex = 51
 let errorIndex = 6
 let errorRulesExists = false
 let private parserSource = new ParserSource<Token> (gotos, reduces, zeroReduces, accStates, rules, rulesStart, leftSide, startRule, eofIndex, tokenToNumber, acceptEmptyInput, numToString, errorIndex, errorRulesExists)
 let buildAst : (seq<Token> -> ParseResult<Token>) =
     buildAst<Token> parserSource
 
-let _rnglr_epsilons : Tree<Token>[] = [|new Tree<_>(null,box (new AST(new Family(43, new Nodes([|box (new AST(new Family(41, new Nodes([||])), null))|])), null)), null); new Tree<_>(null,box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null)), null); null; null; null; new Tree<_>(null,box (new AST(new Family(37, new Nodes([|box (new AST(new Family(35, new Nodes([||])), null)); box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null))|])), null)), null); new Tree<_>(null,box (new AST(new Family(64, new Nodes([||])), null)), null); null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(49, new Nodes([|box (new AST(new Family(37, new Nodes([|box (new AST(new Family(35, new Nodes([||])), null)); box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null))|])), null))|])), null)), null); new Tree<_>(null,box (new AST(new Family(57, new Nodes([|box (new AST(new Family(53, new Nodes([||])), null))|])), null)), null); null; null; new Tree<_>(null,box (new AST(new Family(12, new Nodes([|box (new AST(new Family(49, new Nodes([|box (new AST(new Family(37, new Nodes([|box (new AST(new Family(35, new Nodes([||])), null)); box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null))|])), null))|])), null)); box (new AST(new Family(55, new Nodes([||])), null))|])), null)), null); null; null; null; null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(53, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(44, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(39, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(33, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(60, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(58, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(55, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(25, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(22, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(17, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(19, new Nodes([||])), null)), null); null; null; null; new Tree<_>(null,box (new AST(new Family(41, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(35, new Nodes([||])), null)), null); null|]
-let _rnglr_filtered_epsilons : Tree<Token>[] = [|new Tree<_>(null,box (new AST(new Family(43, new Nodes([|box (new AST(new Family(41, new Nodes([||])), null))|])), null)), null); new Tree<_>(null,box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null)), null); null; null; null; new Tree<_>(null,box (new AST(new Family(37, new Nodes([|box (new AST(new Family(35, new Nodes([||])), null)); box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null))|])), null)), null); new Tree<_>(null,box (new AST(new Family(64, new Nodes([||])), null)), null); null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(49, new Nodes([|box (new AST(new Family(37, new Nodes([|box (new AST(new Family(35, new Nodes([||])), null)); box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null))|])), null))|])), null)), null); new Tree<_>(null,box (new AST(new Family(57, new Nodes([|box (new AST(new Family(53, new Nodes([||])), null))|])), null)), null); null; null; new Tree<_>(null,box (new AST(new Family(12, new Nodes([|box (new AST(new Family(49, new Nodes([|box (new AST(new Family(37, new Nodes([|box (new AST(new Family(35, new Nodes([||])), null)); box (new AST(new Family(46, new Nodes([|box (new AST(new Family(44, new Nodes([||])), null))|])), null))|])), null))|])), null)); box (new AST(new Family(55, new Nodes([||])), null))|])), null)), null); null; null; null; null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(53, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(44, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(39, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(33, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(60, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(58, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(55, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(25, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(22, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(17, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(19, new Nodes([||])), null)), null); null; null; null; new Tree<_>(null,box (new AST(new Family(41, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(35, new Nodes([||])), null)), null); null|]
+let _rnglr_epsilons : Tree<Token>[] = [|null; new Tree<_>(null,box (new AST(new Family(41, new Nodes([|box (new AST(new Family(37, new Nodes([||])), null))|])), null)), null); null; null; null; null; new Tree<_>(null,box (new AST(new Family(63, new Nodes([||])), null)), null); null; null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(52, new Nodes([|box (new AST(new Family(48, new Nodes([||])), null))|])), null)), null); null; null; null; null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(48, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(37, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(59, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(55, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(53, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(50, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(39, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(34, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(32, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(29, new Nodes([||])), [|new Family(30, new Nodes([|box (new AST(new Family(41, new Nodes([|box (new AST(new Family(37, new Nodes([||])), null))|])), null))|]))|])), null); new Tree<_>(null,box (new AST(new Family(26, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(23, new Nodes([||])), [|new Family(24, new Nodes([|box (new AST(new Family(41, new Nodes([|box (new AST(new Family(37, new Nodes([||])), null))|])), null))|]))|])), null); new Tree<_>(null,box (new AST(new Family(20, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(12, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(14, new Nodes([||])), null)), null); null|]
+let _rnglr_filtered_epsilons : Tree<Token>[] = [|null; new Tree<_>(null,box (new AST(new Family(41, new Nodes([|box (new AST(new Family(37, new Nodes([||])), null))|])), null)), null); null; null; null; null; new Tree<_>(null,box (new AST(new Family(63, new Nodes([||])), null)), null); null; null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(52, new Nodes([|box (new AST(new Family(48, new Nodes([||])), null))|])), null)), null); null; null; null; null; null; null; null; null; new Tree<_>(null,box (new AST(new Family(48, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(37, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(59, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(55, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(53, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(50, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(39, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(34, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(32, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(29, new Nodes([||])), [|new Family(30, new Nodes([|box (new AST(new Family(41, new Nodes([|box (new AST(new Family(37, new Nodes([||])), null))|])), null))|]))|])), null); new Tree<_>(null,box (new AST(new Family(26, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(23, new Nodes([||])), [|new Family(24, new Nodes([|box (new AST(new Family(41, new Nodes([|box (new AST(new Family(37, new Nodes([||])), null))|])), null))|]))|])), null); new Tree<_>(null,box (new AST(new Family(20, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(12, new Nodes([||])), null)), null); new Tree<_>(null,box (new AST(new Family(14, new Nodes([||])), null)), null); null|]
 for x in _rnglr_filtered_epsilons do if x <> null then x.ChooseSingleAst()
 let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats = 
-  (Array.zeroCreate 0 : array<'_rnglr_type_a_list * '_rnglr_type_attr_list * '_rnglr_type_attr_stmt * '_rnglr_type_compass_pt * '_rnglr_type_edge_operator * '_rnglr_type_edge_stmt * '_rnglr_type_error * '_rnglr_type_graph * '_rnglr_type_id * '_rnglr_type_node_id * '_rnglr_type_node_stmt * '_rnglr_type_port * '_rnglr_type_stmt * '_rnglr_type_stmt_list * '_rnglr_type_subgraph * '_rnglr_type_yard_exp_brackets_367 * '_rnglr_type_yard_exp_brackets_368 * '_rnglr_type_yard_exp_brackets_369 * '_rnglr_type_yard_exp_brackets_370 * '_rnglr_type_yard_exp_brackets_371 * '_rnglr_type_yard_exp_brackets_372 * '_rnglr_type_yard_exp_brackets_373 * '_rnglr_type_yard_exp_brackets_374 * '_rnglr_type_yard_exp_brackets_375 * '_rnglr_type_yard_exp_brackets_376 * '_rnglr_type_yard_many_119 * '_rnglr_type_yard_many_120 * '_rnglr_type_yard_many_121 * '_rnglr_type_yard_many_122 * '_rnglr_type_yard_opt_154 * '_rnglr_type_yard_opt_155 * '_rnglr_type_yard_opt_156 * '_rnglr_type_yard_opt_157 * '_rnglr_type_yard_opt_158 * '_rnglr_type_yard_opt_159 * '_rnglr_type_yard_opt_160 * '_rnglr_type_yard_rule_362 * '_rnglr_type_yard_rule_364 * '_rnglr_type_yard_rule_365 * '_rnglr_type_yard_rule_list_363 * '_rnglr_type_yard_rule_list_366 * '_rnglr_type_yard_start_rule>), 
+  (Array.zeroCreate 0 : array<'_rnglr_type_a_list * '_rnglr_type_attr_list * '_rnglr_type_attr_stmt * '_rnglr_type_edgeRHS * '_rnglr_type_edge_stmt * '_rnglr_type_edgeop * '_rnglr_type_error * '_rnglr_type_graph * '_rnglr_type_graph_type * '_rnglr_type_node_id * '_rnglr_type_node_stmt * '_rnglr_type_port * '_rnglr_type_stmt * '_rnglr_type_stmt_list * '_rnglr_type_subgraph * '_rnglr_type_yard_exp_brackets_326 * '_rnglr_type_yard_exp_brackets_327 * '_rnglr_type_yard_exp_brackets_328 * '_rnglr_type_yard_exp_brackets_329 * '_rnglr_type_yard_exp_brackets_330 * '_rnglr_type_yard_exp_brackets_331 * '_rnglr_type_yard_exp_brackets_332 * '_rnglr_type_yard_many_8 * '_rnglr_type_yard_many_9 * '_rnglr_type_yard_opt_799 * '_rnglr_type_yard_opt_800 * '_rnglr_type_yard_opt_801 * '_rnglr_type_yard_opt_802 * '_rnglr_type_yard_opt_803 * '_rnglr_type_yard_opt_804 * '_rnglr_type_yard_opt_805 * '_rnglr_type_yard_opt_806 * '_rnglr_type_yard_opt_807 * '_rnglr_type_yard_opt_808 * '_rnglr_type_yard_opt_809 * '_rnglr_type_yard_opt_810 * '_rnglr_type_yard_opt_811 * '_rnglr_type_yard_start_rule>), 
   [|
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr7:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with SUBGR _rnglr_val -> [_rnglr_val] | a -> failwith "SUBGR expected, but %A found" a )
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_opt_160) (gr7:GraphDataContainer)
-               |> List.iter (fun (i) -> 
-                _rnglr_cycle_res := (
-                  
-# 60 "DotGrammar.yrd"
-                                                                          i
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
+        ( 
+          []
             )
 
-               : '_rnglr_type_yard_exp_brackets_376) 
-# 261 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_332) 
+# 246 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with COL _rnglr_val -> [_rnglr_val] | a -> failwith "COL expected, but %A found" a )
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_compass_pt) 
-               |> List.iter (fun (_) -> 
-                _rnglr_cycle_res := (
-                  
-# 58 "DotGrammar.yrd"
-                                                  1
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
+          []
             )
 
-               : '_rnglr_type_yard_exp_brackets_375) 
-# 283 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_331) 
+# 256 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with COL _rnglr_val -> [_rnglr_val] | a -> failwith "COL expected, but %A found" a )
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_id) 
-               |> List.iter (fun (_) -> 
-                ((unbox _rnglr_children.[2]) : '_rnglr_type_yard_opt_158) 
-                 |> List.iter (fun (_) -> 
-                  _rnglr_cycle_res := (
-                    
-# 58 "DotGrammar.yrd"
-                                                         1
-                      )::!_rnglr_cycle_res ) ) )
-            !_rnglr_cycle_res
-          )
+          []
             )
 
-               : '_rnglr_type_yard_exp_brackets_374) 
-# 307 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_331) 
+# 266 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun (g:GraphData) ->
+          []
+            )
+
+               : '_rnglr_type_yard_exp_brackets_330) 
+# 276 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun (g:GraphData) ->
+          []
+            )
+
+               : '_rnglr_type_yard_exp_brackets_330) 
+# 286 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with COL _rnglr_val -> [_rnglr_val] | a -> failwith "COL expected, but %A found" a )
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_compass_pt) 
-               |> List.iter (fun (_) -> 
-                _rnglr_cycle_res := (
-                  
-# 58 "DotGrammar.yrd"
-                                                  1
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
+          []
             )
 
-               : '_rnglr_type_yard_exp_brackets_374) 
-# 329 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_329) 
+# 296 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with EDGEOP _rnglr_val -> [_rnglr_val] | a -> failwith "EDGEOP expected, but %A found" a )
-             |> List.iter (fun (p) -> 
-              _rnglr_cycle_res := (
-                
-# 49 "DotGrammar.yrd"
-                                              p
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+          []
             )
 
-               : '_rnglr_type_yard_exp_brackets_373) 
-# 349 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_329) 
+# 306 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with DIEDGEOP _rnglr_val -> [_rnglr_val] | a -> failwith "DIEDGEOP expected, but %A found" a )
-             |> List.iter (fun (p) -> 
-              _rnglr_cycle_res := (
-                
-# 49 "DotGrammar.yrd"
-                                                               p
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+          []
             )
 
-               : '_rnglr_type_yard_exp_brackets_373) 
-# 369 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_328) 
+# 316 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun hd ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_rule_365) 
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_rule_364) 
-               |> List.iter (fun (i) -> 
-                _rnglr_cycle_res := (
-                  
-# 22 "DotGrammar.yrd"
-                                                                                 i 
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
-            )
-
-               : '_rnglr_type_yard_exp_brackets_372) 
-# 391 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun hd ->
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with COMMA _rnglr_val -> [_rnglr_val] | a -> failwith "COMMA expected, but %A found" a )
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_rule_362) 
-               |> List.iter (fun (i) -> 
-                _rnglr_cycle_res := (
-                  
-# 22 "DotGrammar.yrd"
-                                                                                 i 
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
-            )
-
-               : '_rnglr_type_yard_exp_brackets_371) 
-# 413 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with LSQBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "LSQBRACE expected, but %A found" a )
-             |> List.iter (fun (_) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_a_list) 
-               |> List.iter (fun (l) -> 
-                (match ((unbox _rnglr_children.[2]) : Token) with RSQBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "RSQBRACE expected, but %A found" a )
-                 |> List.iter (fun (_) -> 
-                  _rnglr_cycle_res := (
-                    
-# 41 "DotGrammar.yrd"
-                                                               l
-                      )::!_rnglr_cycle_res ) ) )
-            !_rnglr_cycle_res
-          )
-            )
-
-               : '_rnglr_type_yard_exp_brackets_370) 
-# 437 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr3:GraphDataContainer) ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
             (match ((unbox _rnglr_children.[0]) : Token) with GRAPH _rnglr_val -> [_rnglr_val] | a -> failwith "GRAPH expected, but %A found" a )
-             |> List.iter (fun (n) -> 
+             |> List.iter (fun (t) -> 
               _rnglr_cycle_res := (
                 
-# 38 "DotGrammar.yrd"
-                                                                            n
+# 40 "DotGrammar.yrd"
+                                t
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
 
-               : '_rnglr_type_yard_exp_brackets_369) 
-# 457 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_327) 
+# 336 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr3:GraphDataContainer) ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
             (match ((unbox _rnglr_children.[0]) : Token) with NODE _rnglr_val -> [_rnglr_val] | a -> failwith "NODE expected, but %A found" a )
-             |> List.iter (fun (n) -> 
+             |> List.iter (fun (t) -> 
               _rnglr_cycle_res := (
                 
-# 38 "DotGrammar.yrd"
-                                                                                         n
+# 40 "DotGrammar.yrd"
+                                            t
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
 
-               : '_rnglr_type_yard_exp_brackets_369) 
-# 477 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_327) 
+# 356 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr3:GraphDataContainer) ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
             (match ((unbox _rnglr_children.[0]) : Token) with EDGE _rnglr_val -> [_rnglr_val] | a -> failwith "EDGE expected, but %A found" a )
-             |> List.iter (fun (n) -> 
-              _rnglr_cycle_res := (
-                
-# 38 "DotGrammar.yrd"
-                                                                                                      n
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-
-               : '_rnglr_type_yard_exp_brackets_369) 
-# 497 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_stmt) gr
-             |> List.iter (fun (s) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_opt_156) (gr:GraphDataContainer) s
-               |> List.iter (fun (_) -> 
-                _rnglr_cycle_res := (
-                  
-# 29 "DotGrammar.yrd"
-                                                                              s
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
-            )
-
-               : '_rnglr_type_yard_exp_brackets_368) 
-# 519 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun strict ->
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with GRAPH _rnglr_val -> [_rnglr_val] | a -> failwith "GRAPH expected, but %A found" a )
              |> List.iter (fun (t) -> 
               _rnglr_cycle_res := (
                 
-# 25 "DotGrammar.yrd"
-                                                             t
+# 40 "DotGrammar.yrd"
+                                                         t
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
 
-               : '_rnglr_type_yard_exp_brackets_367) 
-# 539 "DotParser.fs"
+               : '_rnglr_type_yard_exp_brackets_327) 
+# 376 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun strict ->
+        ( fun (g:GraphData) ->
+          []
+            )
+
+               : '_rnglr_type_yard_exp_brackets_326) 
+# 386 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
           (
             let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with DIGRAPH _rnglr_val -> [_rnglr_val] | a -> failwith "DIGRAPH expected, but %A found" a )
-             |> List.iter (fun (t) -> 
+            _rnglr_cycle_res := (
+              
+# 58 "DotGrammar.yrd"
+                         None
+                )::!_rnglr_cycle_res
+            !_rnglr_cycle_res
+          )
+            )
+# 58 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_810) 
+# 404 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_332) 
+             |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 25 "DotGrammar.yrd"
-                                                                             t
+# 58 "DotGrammar.yrd"
+                           Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-
-               : '_rnglr_type_yard_exp_brackets_367) 
-# 559 "DotParser.fs"
+# 58 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_810) 
+# 424 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            _rnglr_cycle_res := (
+              
+# 24 "DotGrammar.yrd"
+                                    None
+                )::!_rnglr_cycle_res
+            !_rnglr_cycle_res
+          )
+            )
+# 24 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_811) 
+# 442 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -565,236 +448,96 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
           (
             let _rnglr_cycle_res = ref []
             (match ((unbox _rnglr_children.[0]) : Token) with ID _rnglr_val -> [_rnglr_val] | a -> failwith "ID expected, but %A found" a )
-             |> List.iter (fun (i) -> 
+             |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 65 "DotGrammar.yrd"
-                            i 
+# 24 "DotGrammar.yrd"
+                                      Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 65 "DotGrammar.yrd"
-               : '_rnglr_type_id) 
-# 579 "DotParser.fs"
+# 24 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_811) 
+# 462 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with ID _rnglr_val -> [_rnglr_val] | a -> failwith "ID expected, but %A found" a )
-             |> List.iter (fun (i) -> 
-              _rnglr_cycle_res := (
-                
-# 63 "DotGrammar.yrd"
-                                   
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+          []
             )
-# 63 "DotGrammar.yrd"
-               : '_rnglr_type_compass_pt) 
-# 599 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr7:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            _rnglr_cycle_res := (
-              
-# 60 "DotGrammar.yrd"
-                                                        None
-                )::!_rnglr_cycle_res
-            !_rnglr_cycle_res
-          )
-            )
-# 60 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_159) 
-# 617 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr7:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_376) (gr7:GraphDataContainer)
-             |> List.iter (fun (yard_elem) -> 
-              _rnglr_cycle_res := (
-                
-# 60 "DotGrammar.yrd"
-                                                          Some(yard_elem)
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 60 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_159) 
-# 637 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr7:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            _rnglr_cycle_res := (
-              
-# 25 "DotGrammar.yrd"
-                                                                                     None
-                )::!_rnglr_cycle_res
-            !_rnglr_cycle_res
-          )
-            )
-# 25 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_160) 
-# 655 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr7:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_id) 
-             |> List.iter (fun (yard_elem) -> 
-              _rnglr_cycle_res := (
-                
-# 25 "DotGrammar.yrd"
-                                                                                       Some(yard_elem)
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 25 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_160) 
-# 675 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr7:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_opt_159) (gr7:GraphDataContainer)
-             |> List.iter (fun (n) -> 
-              (match ((unbox _rnglr_children.[1]) : Token) with LCURBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "LCURBRACE expected, but %A found" a )
-               |> List.iter (fun (_) -> 
-                ((unbox _rnglr_children.[2]) : '_rnglr_type_stmt_list) gr7
-                 |> List.iter (fun (l) -> 
-                  (match ((unbox _rnglr_children.[3]) : Token) with RCURBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "RCURBRACE expected, but %A found" a )
-                   |> List.iter (fun (_) -> 
-                    _rnglr_cycle_res := (
-                      
-# 61 "DotGrammar.yrd"
-                        Utils.addSubgraphToArray n gr7 graphs 
-                        )::!_rnglr_cycle_res ) ) ) )
-            !_rnglr_cycle_res
-          )
-            )
-# 60 "DotGrammar.yrd"
+# 58 "DotGrammar.yrd"
                : '_rnglr_type_subgraph) 
-# 701 "DotParser.fs"
+# 472 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            _rnglr_cycle_res := (
-              
-# 58 "DotGrammar.yrd"
-                      None
-                )::!_rnglr_cycle_res
-            !_rnglr_cycle_res
-          )
+          []
             )
-# 58 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_158) 
-# 719 "DotParser.fs"
+# 56 "DotGrammar.yrd"
+               : '_rnglr_type_edgeop) 
+# 482 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_375) 
-             |> List.iter (fun (yard_elem) -> 
-              _rnglr_cycle_res := (
-                
-# 58 "DotGrammar.yrd"
-                        Some(yard_elem)
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+          []
             )
-# 58 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_158) 
-# 739 "DotParser.fs"
+# 56 "DotGrammar.yrd"
+               : '_rnglr_type_edgeop) 
+# 492 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
         ( 
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_374) 
-             |> List.iter (fun (_) -> 
-              _rnglr_cycle_res := (
-                
-# 58 "DotGrammar.yrd"
-                                                                               1
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+          []
             )
-# 58 "DotGrammar.yrd"
+# 54 "DotGrammar.yrd"
                : '_rnglr_type_port) 
-# 759 "DotParser.fs"
+# 502 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun nodeID ->
+        ( 
           (
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 55 "DotGrammar.yrd"
-                                   None
+# 52 "DotGrammar.yrd"
+                           None
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 55 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_157) 
-# 777 "DotParser.fs"
+# 52 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_809) 
+# 520 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun nodeID ->
+        ( 
           (
             let _rnglr_cycle_res = ref []
             ((unbox _rnglr_children.[0]) : '_rnglr_type_port) 
              |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 55 "DotGrammar.yrd"
-                                     Some(yard_elem)
+# 52 "DotGrammar.yrd"
+                             Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 55 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_157) 
-# 797 "DotParser.fs"
+# 52 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_809) 
+# 540 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -802,163 +545,81 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_id) 
-             |> List.iter (fun (nodeID) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_opt_157) nodeID
+            (match ((unbox _rnglr_children.[0]) : Token) with ID _rnglr_val -> [_rnglr_val] | a -> failwith "ID expected, but %A found" a )
+             |> List.iter (fun (_) -> 
+              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_opt_809) 
                |> List.iter (fun (_) -> 
                 _rnglr_cycle_res := (
                   
-# 56 "DotGrammar.yrd"
-                    nodeID 
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
-            )
-# 55 "DotGrammar.yrd"
-               : '_rnglr_type_node_id) 
-# 819 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun (gr6:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_node_id) 
-             |> List.iter (fun (nodeID) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_attr_list) 
-               |> List.iter (fun (lst) -> 
-                _rnglr_cycle_res := (
-                  
-# 53 "DotGrammar.yrd"
-                    gr6.AddNodeStmtData nodeID lst 
+# 52 "DotGrammar.yrd"
+                                       ID 
                     )::!_rnglr_cycle_res ) )
             !_rnglr_cycle_res
           )
             )
 # 52 "DotGrammar.yrd"
-               : '_rnglr_type_node_stmt) 
-# 841 "DotParser.fs"
+               : '_rnglr_type_node_id) 
+# 562 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( 
+        ( fun (g:GraphData) -> fun name ->
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_373) 
-             |> List.iter (fun (op) -> 
+            _rnglr_cycle_res := (
+              
+# 40 "DotGrammar.yrd"
+                                                             None
+                )::!_rnglr_cycle_res
+            !_rnglr_cycle_res
+          )
+            )
+# 40 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_808) 
+# 580 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun (g:GraphData) -> fun name ->
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_attr_list) 
+             |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 50 "DotGrammar.yrd"
-                  op 
+# 40 "DotGrammar.yrd"
+                                                               Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 49 "DotGrammar.yrd"
-               : '_rnglr_type_edge_operator) 
-# 861 "DotParser.fs"
+# 40 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_808) 
+# 600 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( 
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
             ((unbox _rnglr_children.[0]) : '_rnglr_type_node_id) 
-             |> List.iter (fun (nodeID) -> 
-              _rnglr_cycle_res := (
-                
-# 46 "DotGrammar.yrd"
-                                             nodeID 
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 46 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_364) 
-# 881 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( 
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_subgraph) (new GraphDataContainer())
-             |> List.iter (fun (sub) -> 
-              _rnglr_cycle_res := (
-                
-# 46 "DotGrammar.yrd"
-                                                                                                     sub 
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 46 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_364) 
-# 901 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( 
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_edge_operator) 
-             |> List.iter (fun (l) -> 
-              _rnglr_cycle_res := (
-                
-# 46 "DotGrammar.yrd"
-                                                                                                                             l
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 46 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_365) 
-# 921 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun hd ->
-          (
-            let _rnglr_cycle_res = ref []
-            _rnglr_cycle_res := (
-              
-# 46 "DotGrammar.yrd"
-                                                                                                             []
-                )::!_rnglr_cycle_res
-            !_rnglr_cycle_res
-          )
-            )
-# 46 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_122) 
-# 939 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun hd ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_372) hd
-             |> List.iter (fun (yard_head) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_122) hd
-               |> List.iter (fun (yard_tail) -> 
+             |> List.iter (fun (name) -> 
+              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_opt_808) (g:GraphData) name
+               |> List.iter (fun (_) -> 
                 _rnglr_cycle_res := (
                   
-# 46 "DotGrammar.yrd"
-                                                                                                                 yard_head::yard_tail
+# 50 "DotGrammar.yrd"
+                                                                         g.AddNode name 
                     )::!_rnglr_cycle_res ) )
             !_rnglr_cycle_res
           )
             )
-# 46 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_122) 
-# 961 "DotParser.fs"
+# 50 "DotGrammar.yrd"
+               : '_rnglr_type_node_stmt) 
+# 622 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -968,15 +629,15 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 22 "DotGrammar.yrd"
-                                       [] 
+# 46 "DotGrammar.yrd"
+                                                               None
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 22 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_list_366) 
-# 979 "DotParser.fs"
+# 46 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_807) 
+# 640 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -984,107 +645,77 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_rule_364) 
-             |> List.iter (fun (hd) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_122) hd
-               |> List.iter (fun (tl) -> 
-                _rnglr_cycle_res := (
-                  
-# 22 "DotGrammar.yrd"
-                                                                                         hd::tl 
-                    )::!_rnglr_cycle_res ) )
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_edgeRHS) 
+             |> List.iter (fun (yard_elem) -> 
+              _rnglr_cycle_res := (
+                
+# 46 "DotGrammar.yrd"
+                                                                 Some(yard_elem)
+                  )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 22 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_list_366) 
-# 1001 "DotParser.fs"
+# 46 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_807) 
+# 660 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr4:GraphDataContainer) ->
+        ( 
+          []
+            )
+# 48 "DotGrammar.yrd"
+               : '_rnglr_type_edgeRHS) 
+# 670 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_rule_list_366) 
-             |> List.iter (fun (edges) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_attr_list) 
-               |> List.iter (fun (lst) -> 
-                _rnglr_cycle_res := (
-                  
-# 47 "DotGrammar.yrd"
-                    gr4.AddEdgeStmtData edges lst 
-                    )::!_rnglr_cycle_res ) )
+            _rnglr_cycle_res := (
+              
+# 40 "DotGrammar.yrd"
+                                                             None
+                )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 45 "DotGrammar.yrd"
+# 40 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_806) 
+# 688 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun (g:GraphData) ->
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_attr_list) 
+             |> List.iter (fun (yard_elem) -> 
+              _rnglr_cycle_res := (
+                
+# 40 "DotGrammar.yrd"
+                                                               Some(yard_elem)
+                  )::!_rnglr_cycle_res )
+            !_rnglr_cycle_res
+          )
+            )
+# 40 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_806) 
+# 708 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun (g:GraphData) ->
+          []
+            )
+# 46 "DotGrammar.yrd"
                : '_rnglr_type_edge_stmt) 
-# 1023 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( 
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_id) 
-             |> List.iter (fun (k) -> 
-              (match ((unbox _rnglr_children.[1]) : Token) with ASSIGN _rnglr_val -> [_rnglr_val] | a -> failwith "ASSIGN expected, but %A found" a )
-               |> List.iter (fun (_) -> 
-                ((unbox _rnglr_children.[2]) : '_rnglr_type_id) 
-                 |> List.iter (fun (v) -> 
-                  _rnglr_cycle_res := (
-                    
-# 43 "DotGrammar.yrd"
-                                                         (k,v)
-                      )::!_rnglr_cycle_res ) ) )
-            !_rnglr_cycle_res
-          )
-            )
-# 43 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_362) 
-# 1047 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun hd ->
-          (
-            let _rnglr_cycle_res = ref []
-            _rnglr_cycle_res := (
-              
-# 43 "DotGrammar.yrd"
-                                                           []
-                )::!_rnglr_cycle_res
-            !_rnglr_cycle_res
-          )
-            )
-# 43 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_121) 
-# 1065 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun hd ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_371) hd
-             |> List.iter (fun (yard_head) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_121) hd
-               |> List.iter (fun (yard_tail) -> 
-                _rnglr_cycle_res := (
-                  
-# 43 "DotGrammar.yrd"
-                                                               yard_head::yard_tail
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
-            )
-# 43 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_121) 
-# 1087 "DotParser.fs"
+# 718 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1094,15 +725,15 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 22 "DotGrammar.yrd"
-                                       [] 
+# 42 "DotGrammar.yrd"
+                                    None
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 22 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_list_363) 
-# 1105 "DotParser.fs"
+# 42 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_805) 
+# 736 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1110,41 +741,67 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_rule_362) 
-             |> List.iter (fun (hd) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_121) hd
-               |> List.iter (fun (tl) -> 
-                _rnglr_cycle_res := (
-                  
-# 22 "DotGrammar.yrd"
-                                                                                         hd::tl 
-                    )::!_rnglr_cycle_res ) )
-            !_rnglr_cycle_res
-          )
-            )
-# 22 "DotGrammar.yrd"
-               : '_rnglr_type_yard_rule_list_363) 
-# 1127 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( 
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_rule_list_363) 
-             |> List.iter (fun (lst) -> 
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_a_list) 
+             |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 43 "DotGrammar.yrd"
-                                                                      lst 
+# 42 "DotGrammar.yrd"
+                                      Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 43 "DotGrammar.yrd"
+# 42 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_805) 
+# 756 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            _rnglr_cycle_res := (
+              
+# 44 "DotGrammar.yrd"
+                                    None
+                )::!_rnglr_cycle_res
+            !_rnglr_cycle_res
+          )
+            )
+# 44 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_804) 
+# 774 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_329) 
+             |> List.iter (fun (yard_elem) -> 
+              _rnglr_cycle_res := (
+                
+# 44 "DotGrammar.yrd"
+                                      Some(yard_elem)
+                  )::!_rnglr_cycle_res )
+            !_rnglr_cycle_res
+          )
+            )
+# 44 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_804) 
+# 794 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          []
+            )
+# 44 "DotGrammar.yrd"
                : '_rnglr_type_a_list) 
-# 1147 "DotParser.fs"
+# 804 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1154,15 +811,15 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 41 "DotGrammar.yrd"
-                             []
+# 42 "DotGrammar.yrd"
+                          []
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 41 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_120) 
-# 1165 "DotParser.fs"
+# 42 "DotGrammar.yrd"
+               : '_rnglr_type_yard_many_9) 
+# 822 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1170,21 +827,21 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_370) 
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_328) 
              |> List.iter (fun (yard_head) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_120) 
+              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_9) 
                |> List.iter (fun (yard_tail) -> 
                 _rnglr_cycle_res := (
                   
-# 41 "DotGrammar.yrd"
-                                 yard_head::yard_tail
+# 42 "DotGrammar.yrd"
+                              yard_head::yard_tail
                     )::!_rnglr_cycle_res ) )
             !_rnglr_cycle_res
           )
             )
-# 41 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_120) 
-# 1187 "DotParser.fs"
+# 42 "DotGrammar.yrd"
+               : '_rnglr_type_yard_many_9) 
+# 844 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1192,281 +849,207 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_many_120) 
-             |> List.iter (fun (l) -> 
+            _rnglr_cycle_res := (
+              
+# 42 "DotGrammar.yrd"
+                                    None
+                )::!_rnglr_cycle_res
+            !_rnglr_cycle_res
+          )
+            )
+# 42 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_803) 
+# 862 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_a_list) 
+             |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 41 "DotGrammar.yrd"
-                                                                  List.concat l 
+# 42 "DotGrammar.yrd"
+                                      Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 41 "DotGrammar.yrd"
+# 42 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_803) 
+# 882 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          []
+            )
+# 42 "DotGrammar.yrd"
                : '_rnglr_type_attr_list) 
-# 1207 "DotParser.fs"
+# 892 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr3:GraphDataContainer) ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_369) (gr3:GraphDataContainer)
-             |> List.iter (fun (attr_name) -> 
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_327) (g:GraphData)
+             |> List.iter (fun (t) -> 
               ((unbox _rnglr_children.[1]) : '_rnglr_type_attr_list) 
-               |> List.iter (fun (lst) -> 
+               |> List.iter (fun (l) -> 
                 _rnglr_cycle_res := (
                   
-# 39 "DotGrammar.yrd"
-                    gr3.AddGeneralAttrs attr_name lst 
+# 40 "DotGrammar.yrd"
+                                                                             g.AddDefaultAttributes t l 
                     )::!_rnglr_cycle_res ) )
             !_rnglr_cycle_res
           )
             )
-# 38 "DotGrammar.yrd"
+# 39 "DotGrammar.yrd"
                : '_rnglr_type_attr_stmt) 
-# 1229 "DotParser.fs"
+# 914 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr2:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_node_stmt) gr2
-             |> List.iter (fun (_) -> 
-              _rnglr_cycle_res := (
-                
+        ( fun (g:GraphData) ->
+          []
+            )
 # 32 "DotGrammar.yrd"
-                                         
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 31 "DotGrammar.yrd"
                : '_rnglr_type_stmt) 
-# 1249 "DotParser.fs"
+# 924 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr2:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_edge_stmt) gr2
-             |> List.iter (fun (_) -> 
-              _rnglr_cycle_res := (
-                
-# 33 "DotGrammar.yrd"
-                                         
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+        ( fun (g:GraphData) ->
+          []
             )
-# 31 "DotGrammar.yrd"
+# 32 "DotGrammar.yrd"
                : '_rnglr_type_stmt) 
-# 1269 "DotParser.fs"
+# 934 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr2:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_attr_stmt) gr2
-             |> List.iter (fun (attr_s) -> 
-              _rnglr_cycle_res := (
-                
-# 34 "DotGrammar.yrd"
-                                             
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+        ( fun (g:GraphData) ->
+          []
             )
-# 31 "DotGrammar.yrd"
+# 32 "DotGrammar.yrd"
                : '_rnglr_type_stmt) 
-# 1289 "DotParser.fs"
+# 944 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr2:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_id) 
-             |> List.iter (fun (k) -> 
-              (match ((unbox _rnglr_children.[1]) : Token) with ASSIGN _rnglr_val -> [_rnglr_val] | a -> failwith "ASSIGN expected, but %A found" a )
-               |> List.iter (fun (_) -> 
-                ((unbox _rnglr_children.[2]) : '_rnglr_type_id) 
-                 |> List.iter (fun (v) -> 
-                  _rnglr_cycle_res := (
-                    
-# 35 "DotGrammar.yrd"
-                                           gr2.AddAssignStmt k v 
-                      )::!_rnglr_cycle_res ) ) )
-            !_rnglr_cycle_res
-          )
+        ( fun (g:GraphData) ->
+          []
             )
-# 31 "DotGrammar.yrd"
+# 32 "DotGrammar.yrd"
                : '_rnglr_type_stmt) 
-# 1313 "DotParser.fs"
+# 954 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr2:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_subgraph) (new GraphDataContainer())
-             |> List.iter (fun (sub) -> 
-              _rnglr_cycle_res := (
-                
-# 36 "DotGrammar.yrd"
-                                                                
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+        ( fun (g:GraphData) ->
+          []
             )
-# 31 "DotGrammar.yrd"
+# 32 "DotGrammar.yrd"
                : '_rnglr_type_stmt) 
-# 1333 "DotParser.fs"
+# 964 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr:GraphDataContainer) ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 29 "DotGrammar.yrd"
-                                                        []
+# 30 "DotGrammar.yrd"
+                                           []
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 29 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_119) 
-# 1351 "DotParser.fs"
+# 30 "DotGrammar.yrd"
+               : '_rnglr_type_yard_many_8) 
+# 982 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr:GraphDataContainer) ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_368) (gr:GraphDataContainer)
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_exp_brackets_326) (g:GraphData)
              |> List.iter (fun (yard_head) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_119) (gr:GraphDataContainer)
+              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_many_8) (g:GraphData)
                |> List.iter (fun (yard_tail) -> 
                 _rnglr_cycle_res := (
                   
-# 29 "DotGrammar.yrd"
-                                                            yard_head::yard_tail
+# 30 "DotGrammar.yrd"
+                                               yard_head::yard_tail
                     )::!_rnglr_cycle_res ) )
             !_rnglr_cycle_res
           )
             )
-# 29 "DotGrammar.yrd"
-               : '_rnglr_type_yard_many_119) 
-# 1373 "DotParser.fs"
+# 30 "DotGrammar.yrd"
+               : '_rnglr_type_yard_many_8) 
+# 1004 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr:GraphDataContainer) -> fun s ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 29 "DotGrammar.yrd"
-                                                                    None
+# 30 "DotGrammar.yrd"
+                                                       None
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 29 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_156) 
-# 1391 "DotParser.fs"
+# 30 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_802) 
+# 1022 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr:GraphDataContainer) -> fun s ->
+        ( fun (g:GraphData) ->
           (
             let _rnglr_cycle_res = ref []
-            (match ((unbox _rnglr_children.[0]) : Token) with SEP _rnglr_val -> [_rnglr_val] | a -> failwith "SEP expected, but %A found" a )
+            (match ((unbox _rnglr_children.[0]) : Token) with SEMI _rnglr_val -> [_rnglr_val] | a -> failwith "SEMI expected, but %A found" a )
              |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 29 "DotGrammar.yrd"
-                                                                      Some(yard_elem)
+# 30 "DotGrammar.yrd"
+                                                         Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 29 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_156) 
-# 1411 "DotParser.fs"
+# 30 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_802) 
+# 1042 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
       box (
-        ( fun (gr:GraphDataContainer) ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_many_119) (gr:GraphDataContainer)
-             |> List.iter (fun (_) -> 
-              _rnglr_cycle_res := (
-                
-# 29 "DotGrammar.yrd"
-                                                                                  
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
+        ( fun (g:GraphData) ->
+          []
             )
-# 29 "DotGrammar.yrd"
+# 30 "DotGrammar.yrd"
                : '_rnglr_type_stmt_list) 
-# 1431 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun strict -> fun graph_type ->
-          (
-            let _rnglr_cycle_res = ref []
-            _rnglr_cycle_res := (
-              
-# 25 "DotGrammar.yrd"
-                                                                                     None
-                )::!_rnglr_cycle_res
-            !_rnglr_cycle_res
-          )
-            )
-# 25 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_155) 
-# 1449 "DotParser.fs"
-      );
-  (
-    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
-      box (
-        ( fun strict -> fun graph_type ->
-          (
-            let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_id) 
-             |> List.iter (fun (yard_elem) -> 
-              _rnglr_cycle_res := (
-                
-# 25 "DotGrammar.yrd"
-                                                                                       Some(yard_elem)
-                  )::!_rnglr_cycle_res )
-            !_rnglr_cycle_res
-          )
-            )
-# 25 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_155) 
-# 1469 "DotParser.fs"
+# 1052 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1476,15 +1059,15 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
             let _rnglr_cycle_res = ref []
             _rnglr_cycle_res := (
               
-# 25 "DotGrammar.yrd"
-                              None
+# 27 "DotGrammar.yrd"
+                      None
                 )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 25 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_154) 
-# 1487 "DotParser.fs"
+# 27 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_801) 
+# 1070 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1496,15 +1079,15 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
              |> List.iter (fun (yard_elem) -> 
               _rnglr_cycle_res := (
                 
-# 25 "DotGrammar.yrd"
-                                Some(yard_elem)
+# 27 "DotGrammar.yrd"
+                        Some(yard_elem)
                   )::!_rnglr_cycle_res )
             !_rnglr_cycle_res
           )
             )
-# 25 "DotGrammar.yrd"
-               : '_rnglr_type_yard_opt_154) 
-# 1507 "DotParser.fs"
+# 27 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_801) 
+# 1090 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1512,29 +1095,147 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           (
             let _rnglr_cycle_res = ref []
-            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_opt_154) 
-             |> List.iter (fun (strict) -> 
-              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_exp_brackets_367) strict
-               |> List.iter (fun (graph_type) -> 
-                ((unbox _rnglr_children.[2]) : '_rnglr_type_yard_opt_155) strict graph_type
-                 |> List.iter (fun (name) -> 
-                  (match ((unbox _rnglr_children.[3]) : Token) with LCURBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "LCURBRACE expected, but %A found" a )
-                   |> List.iter (fun (_) -> 
-                    ((unbox _rnglr_children.[4]) : '_rnglr_type_stmt_list) (graphs.[0])
-                     |> List.iter (fun (_) -> 
-                      (match ((unbox _rnglr_children.[5]) : Token) with RCURBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "RCURBRACE expected, but %A found" a )
-                       |> List.iter (fun (_) -> 
-                        _rnglr_cycle_res := (
-                          
+            _rnglr_cycle_res := (
+              
 # 27 "DotGrammar.yrd"
-                            graphs.[0].AddGeneralInfo strict graph_type name 
-                            )::!_rnglr_cycle_res ) ) ) ) ) )
+                      None
+                )::!_rnglr_cycle_res
             !_rnglr_cycle_res
           )
             )
-# 25 "DotGrammar.yrd"
+# 27 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_800) 
+# 1108 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            (match ((unbox _rnglr_children.[0]) : Token) with STRICT _rnglr_val -> [_rnglr_val] | a -> failwith "STRICT expected, but %A found" a )
+             |> List.iter (fun (yard_elem) -> 
+              _rnglr_cycle_res := (
+                
+# 27 "DotGrammar.yrd"
+                        Some(yard_elem)
+                  )::!_rnglr_cycle_res )
+            !_rnglr_cycle_res
+          )
+            )
+# 27 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_800) 
+# 1128 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_opt_800) 
+             |> List.iter (fun (s) -> 
+              (match ((unbox _rnglr_children.[1]) : Token) with GRAPH _rnglr_val -> [_rnglr_val] | a -> failwith "GRAPH expected, but %A found" a )
+               |> List.iter (fun (_) -> 
+                _rnglr_cycle_res := (
+                  
+# 27 "DotGrammar.yrd"
+                                             data.graph <- new UndirectedGraph<_,_>    (isSome s); data 
+                    )::!_rnglr_cycle_res ) )
+            !_rnglr_cycle_res
+          )
+            )
+# 26 "DotGrammar.yrd"
+               : '_rnglr_type_graph_type) 
+# 1150 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_yard_opt_801) 
+             |> List.iter (fun (s) -> 
+              (match ((unbox _rnglr_children.[1]) : Token) with DIGRAPH _rnglr_val -> [_rnglr_val] | a -> failwith "DIGRAPH expected, but %A found" a )
+               |> List.iter (fun (_) -> 
+                _rnglr_cycle_res := (
+                  
+# 28 "DotGrammar.yrd"
+                                             data.graph <- new BidirectionalGraph<_,_> (isSome s); data 
+                    )::!_rnglr_cycle_res ) )
+            !_rnglr_cycle_res
+          )
+            )
+# 26 "DotGrammar.yrd"
+               : '_rnglr_type_graph_type) 
+# 1172 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun g ->
+          (
+            let _rnglr_cycle_res = ref []
+            _rnglr_cycle_res := (
+              
+# 24 "DotGrammar.yrd"
+                                    None
+                )::!_rnglr_cycle_res
+            !_rnglr_cycle_res
+          )
+            )
+# 24 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_799) 
+# 1190 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( fun g ->
+          (
+            let _rnglr_cycle_res = ref []
+            (match ((unbox _rnglr_children.[0]) : Token) with ID _rnglr_val -> [_rnglr_val] | a -> failwith "ID expected, but %A found" a )
+             |> List.iter (fun (yard_elem) -> 
+              _rnglr_cycle_res := (
+                
+# 24 "DotGrammar.yrd"
+                                      Some(yard_elem)
+                  )::!_rnglr_cycle_res )
+            !_rnglr_cycle_res
+          )
+            )
+# 24 "DotGrammar.yrd"
+               : '_rnglr_type_yard_opt_799) 
+# 1210 "DotParser.fs"
+      );
+  (
+    fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
+      box (
+        ( 
+          (
+            let _rnglr_cycle_res = ref []
+            ((unbox _rnglr_children.[0]) : '_rnglr_type_graph_type) 
+             |> List.iter (fun (g) -> 
+              ((unbox _rnglr_children.[1]) : '_rnglr_type_yard_opt_799) g
+               |> List.iter (fun (_) -> 
+                (match ((unbox _rnglr_children.[2]) : Token) with LCURBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "LCURBRACE expected, but %A found" a )
+                 |> List.iter (fun (_) -> 
+                  ((unbox _rnglr_children.[3]) : '_rnglr_type_stmt_list) g
+                   |> List.iter (fun (_) -> 
+                    (match ((unbox _rnglr_children.[4]) : Token) with RCURBRACE _rnglr_val -> [_rnglr_val] | a -> failwith "RCURBRACE expected, but %A found" a )
+                     |> List.iter (fun (_) -> 
+                      _rnglr_cycle_res := (
+                        
+# 24 "DotGrammar.yrd"
+                                                                                        g 
+                          )::!_rnglr_cycle_res ) ) ) ) )
+            !_rnglr_cycle_res
+          )
+            )
+# 24 "DotGrammar.yrd"
                : '_rnglr_type_graph) 
-# 1537 "DotParser.fs"
+# 1238 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1542,9 +1243,9 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         ( 
           ((unbox _rnglr_children.[0]) : '_rnglr_type_graph) 
             )
-# 25 "DotGrammar.yrd"
+# 24 "DotGrammar.yrd"
                : '_rnglr_type_yard_start_rule) 
-# 1547 "DotParser.fs"
+# 1248 "DotParser.fs"
       );
   (
     fun (_rnglr_children : array<_>) (parserRange : (uint64 * uint64)) -> 
@@ -1562,7 +1263,7 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
             )
 
                : '_rnglr_type_error) 
-# 1565 "DotParser.fs"
+# 1266 "DotParser.fs"
       );
   |] , [|
     (fun (_rnglr_list : list<_>) -> 
@@ -1572,17 +1273,17 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
       box ( 
         _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_attr_list)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr3:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_attr_stmt)  (gr3:GraphDataContainer) ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_attr_stmt)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_compass_pt)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_edgeRHS)   ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_edge_stmt)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_edge_operator)   ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr4:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_edge_stmt)  (gr4:GraphDataContainer) ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_edgeop)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
         _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_error)   ) |> List.concat));
@@ -1591,103 +1292,91 @@ let _rnglr_extra_array, _rnglr_rule_, _rnglr_concats =
         _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_graph)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_id)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_graph_type)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
         _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_node_id)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr6:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_node_stmt)  (gr6:GraphDataContainer) ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_node_stmt)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
         _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_port)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr2:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_stmt)  (gr2:GraphDataContainer) ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_stmt)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_stmt_list)  (gr:GraphDataContainer) ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr7:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_subgraph)  (gr7:GraphDataContainer) ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun strict ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_367)  strict ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_368)  (gr:GraphDataContainer) ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr3:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_369)  (gr3:GraphDataContainer) ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_stmt_list)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_370)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_subgraph)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun hd ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_371)  hd ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_326)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun hd ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_372)  hd ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_373)   ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_327)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_374)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_328)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_375)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_329)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr7:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_376)  (gr7:GraphDataContainer) ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_many_119)  (gr:GraphDataContainer) ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_330)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_many_120)   ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun hd ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_many_121)  hd ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun hd ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_many_122)  hd ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_331)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_154)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_exp_brackets_332)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun strict -> fun graph_type ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_155)  strict graph_type ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr:GraphDataContainer) -> fun s ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_156)  (gr:GraphDataContainer) s ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun nodeID ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_157)  nodeID ) |> List.concat));
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_many_8)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_158)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_many_9)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr7:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_159)  (gr7:GraphDataContainer) ) |> List.concat));
-    (fun (_rnglr_list : list<_>) -> 
-      box ( fun (gr7:GraphDataContainer) ->
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_160)  (gr7:GraphDataContainer) ) |> List.concat));
+      box ( fun g ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_799)  g ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_rule_362)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_800)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_rule_364)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_801)   ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_802)  (g:GraphData) ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_rule_365)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_803)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_rule_list_363)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_804)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
-        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_rule_list_366)   ) |> List.concat));
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_805)   ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( fun (g:GraphData) ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_806)  (g:GraphData) ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( 
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_807)   ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( fun (g:GraphData) -> fun name ->
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_808)  (g:GraphData) name ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( 
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_809)   ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( 
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_810)   ) |> List.concat));
+    (fun (_rnglr_list : list<_>) -> 
+      box ( 
+        _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_opt_811)   ) |> List.concat));
     (fun (_rnglr_list : list<_>) -> 
       box ( 
         _rnglr_list |> List.map (fun _rnglr_item -> ((unbox _rnglr_item) : '_rnglr_type_yard_start_rule)   ) |> List.concat));
