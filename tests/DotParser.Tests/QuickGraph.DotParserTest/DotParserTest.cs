@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using DotParserProject;
 
 namespace QuickGraph.DotParserTest
 {
@@ -7,7 +8,7 @@ namespace QuickGraph.DotParserTest
     {
         private static void TestIsDirectedEmpty(string s, bool isDirected)
         {
-            var graph = Parser.parse(s);
+            var graph = DotParser.parse(s);
 
             Assert.AreEqual(0, graph.VertexCount);
             Assert.AreEqual(0, graph.EdgeCount);
@@ -29,7 +30,7 @@ namespace QuickGraph.DotParserTest
         [TestMethod]
         public void SingleNode()
         {
-            var graph = DotLangParser.parse("graph { a }");
+            var graph = DotParser.parse("graph { a }");
 
             Assert.AreEqual(1, graph.VertexCount);
             Assert.AreEqual(0, graph.EdgeCount);
@@ -90,7 +91,7 @@ namespace QuickGraph.DotParserTest
             var graph = DotParser.parse("graph { \"graph\" -- \"node\" }");
 
             Assert.AreEqual(2, graph.VertexCount);
-            Assert.AreEqual(1, graph.edgeCount);
+            Assert.AreEqual(1, graph.EdgeCount);
             // todo: check name (assert contains keywords)
         }
 

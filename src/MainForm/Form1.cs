@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using QuickGraph;
+using DotParserProject;
 
 namespace MainForm
 {
@@ -18,8 +18,9 @@ namespace MainForm
             //Program.CurrentAlgorithm.Run(DotLangParser.parse(Program.Editor.Text));
             //Program.CurrentAlgorithm.Run(); // todo: send graph parsed from dot
 
-            var graph = DotLangParser.parse(Program.Editor.Text);
-            MessageBox.Show(graph.Vertices.Aggregate("", (current, vertex) => current + vertex + "\n"));
+            //var graph = DotParser.parse(Program.Editor.Text);
+            //MessageBox.Show(
+            //    $"{graph.GetType()} {graph.AllowParallelEdges}\n{graph.Vertices.Aggregate("", (current, vertex) => current + vertex + "\n")}");
             //MessageBox.Show(graph.GetNodes().Aggregate("", (current, node) => current + node.Item1 + "\n"));
         }
 
