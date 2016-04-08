@@ -4,8 +4,6 @@ open Option
 open System.Collections.Generic
 open QuickGraph
 
-let mutable g: GraphData = null
-
 }
 
 tokens {
@@ -24,9 +22,9 @@ options {
 module DotGrammar
 
 [<Start>]
-graph: g=graph_type [ ID ] LCURBRACE (stmt<<g>> [SEMI] { })* RCURBRACE { }
+graph: g=graph_type [ ID ] LCURBRACE (stmt<<g>> [SEMI] { })* RCURBRACE { g.graph }
 
 graph_type:
-    s=[ STRICT ] d=( GRAPH {false} | DIGRAPH {true} ) {g <- new GraphData (d, not <| isSome s); g}
+    s=[ STRICT ] d=( GRAPH {false} | DIGRAPH {true} ) { new GraphData (d, not <| isSome s)}
 
 stmt<<(g: GraphData)>>: name=ID { g.AddNode name }

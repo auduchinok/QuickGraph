@@ -21,6 +21,5 @@ let parse str : IMutableVertexAndEdgeSet<_,_> =
 
     match buildAst tokens with
     | Error (pos, token, msg, debugFuns, _) -> failwithf "Error on position %d, token %A: %s" pos token msg
-    | Success (ast, errors) -> translate translateArgs ast errors |> ignore
-    
-    g.graph // internal graph container, defined in DotGrammar.yrd
+    | Success (ast, errors) -> translate translateArgs ast errors
+
