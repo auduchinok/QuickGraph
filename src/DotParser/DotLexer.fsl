@@ -11,7 +11,8 @@ let keywords =
     [   
         "graph", GRAPH;
         "digraph", DIGRAPH;
-        "strict", STRICT;     
+        "strict", STRICT;
+        "subgraph", SUBGRAPH;     
     ] |> Map.ofList 
 }
 
@@ -21,14 +22,15 @@ let id = ['a'-'z' 'A'-'Z' '_'](['a'-'z' 'A'-'Z' '_' '0'-'9'])*|['-']?('.'['0'-'9
 
 rule tokenize = parse
 | whitespace { tokenize lexbuf }
-| '"' { ID ( (string lexbuf.StartPos "" lexbuf) ) }
-| '{' { LCURBRACE <| lexeme lexbuf }
-| '}' { RCURBRACE <| lexeme lexbuf }
-| ';' { SEMI <| lexeme lexbuf }
-| id { match keywords.TryFind((lexeme lexbuf).ToLower()) with
-        | Some(keyword) -> keyword <| (lexeme lexbuf).ToLower()
-        | None -> ID <| lexeme lexbuf }
-| eof { RNGLR_EOF <| lexeme lexbuf }
+| '"'  { ID ( (string lexbuf.StartPos "" lexbuf) ) }
+| '{'  { LCURBRACE <| lexeme lexbuf }
+| '}'  { RCURBRACE <| lexeme lexbuf }
+| ';'  { SEMI <| lexeme lexbuf }
+| "--" { EDGEOP <| lexeme lexbuf }
+| id   { match keywords.TryFind((lexeme lexbuf).ToLower()) with
+         | Some(keyword) -> keyword <| (lexeme lexbuf).ToLower()
+         | None -> ID <| lexeme lexbuf }
+| eof  { RNGLR_EOF <| lexeme lexbuf }
 | _ { failwithf "unexpected input: %s" <| lexeme lexbuf }
 
 and string pos s = parse

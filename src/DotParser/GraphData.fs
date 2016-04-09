@@ -7,24 +7,23 @@ open QuickGraph
 
 [<AllowNullLiteral>]
 type GraphData = class
+    val private graph : IMutableVertexAndEdgeSet<string, SEdge<string>>
     val private edgesAttributes : Dictionary<string, string>
     val private graphAttributes : Dictionary<string, string>
     val private nodesAttributes : Dictionary<string, string>
 
-    val public graph : IMutableVertexAndEdgeSet<string * Dictionary<string, string>, SEdge<string * Dictionary<string, string>>>
-    val private assign_stmt_list : ResizeArray<string*string> // todo: rewrite assignment statements 
 
     new (isDirected: bool, isStrict: bool) = {
         graph = if isDirected
-                then new BidirectionalGraph<string * Dictionary<string, string>, SEdge<string * Dictionary<string, string>>> (isStrict) :> IMutableVertexAndEdgeSet<_,_>
-                else new UndirectedGraph<string * Dictionary<string, string>, SEdge<string * Dictionary<string, string>>>    (isStrict) :> IMutableVertexAndEdgeSet<_,_>
+                then new BidirectionalGraph<_,_> (isStrict) :> IMutableVertexAndEdgeSet<_,_>
+                else new UndirectedGraph<_,_>    (isStrict) :> IMutableVertexAndEdgeSet<_,_>
 
         edgesAttributes = new Dictionary<_,_> ()
         graphAttributes = new Dictionary<_,_> ()
         nodesAttributes = new Dictionary<_,_> ()
-
-        assign_stmt_list = new ResizeArray<string*string>()
     }
+
+    member x.GetGraph () = x.graph
 
     member x.AddDefaultAttributes key attributes =
         let dict =
@@ -39,9 +38,14 @@ type GraphData = class
         | None -> ()
 
     member x.AddNode name =
-        x.graph.AddVertex (name, new Dictionary<_,_>()) |> ignore
+        x.graph.AddVertex name |> ignore
+        [name]
 
+    member x.AddEdge n1 n2 =
+        if List.length n1 <> List.length n2 then failwith "implement me" else ()
         
+        List.iter2 (fun x1 x2 -> x.graph.AddEdge(new SEdge<_>(x1, x2)) |> ignore) n1 n2
+
     member private x.AddEdges nodes attributes =
 //        match nodes with
 //        | v1 :: v2 :: tail ->
@@ -74,8 +78,8 @@ type GraphData = class
 //             dict.[k] <- v
 
 
-    member x.AddAssignStmt key value =
-        x.assign_stmt_list.Add (key, value) |> ignore 
+//    member x.AddAssignStmt key value =
+//        x.assign_stmt_list.Add (key, value) |> ignore 
        
     // todo: remove or move to Utils    
     member x.PrintAllCollectedData() =

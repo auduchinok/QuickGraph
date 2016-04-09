@@ -2,6 +2,7 @@
 open DotParserProject.GraphData
 open Option
 open System.Collections.Generic
+open System.Linq
 open QuickGraph
 
 let mutable g: GraphData = null
@@ -12,21 +13,38 @@ tokens {
     _ of string
 }
 
-options {   
+options {
     translate = true
     module = "DotParserProject.Gen.DotParser"
     infEpsPath = epsilons
     pos = uint64
 }
 
-
-
 module DotGrammar
 
 [<Start>]
-graph: g=graph_type [ ID ] LCURBRACE (stmt<<g>> [SEMI] { })* RCURBRACE { }
+graph: g=graph_type [ ID ] LCURBRACE  stmt_list<<g>> RCURBRACE { }
 
 graph_type:
     s=[ STRICT ] d=( GRAPH {false} | DIGRAPH {true} ) {g <- new GraphData (d, not <| isSome s); g}
 
-stmt<<(g: GraphData)>>: name=ID { g.AddNode name }
+stmt_list<<(g: GraphData)>>: ( stmt<<g>> [SEMI] { } )* { }
+
+stmt<<(g: GraphData)>>:
+    node_stmt<<g>> { } |
+    edge_stmt<<g>> { } |
+    subgraph<<(new GraphData(g.GetGraph().IsDirected, not <| g.GetGraph().AllowParallelEdges))>>
+    { (* should inherit all parent's attributes; return nodes here *) }
+
+node_stmt<<(g: GraphData)>>: node_id<<g>> { }
+
+edge_stmt<<(g: GraphData)>>: n1=node_id<<g>> n2=edge_rhs<<g>> { g.AddEdge n1 n2 }
+
+edge_rhs<<(g: GraphData)>>: edgeop n=node_id<<g>> { n (* should add edges here, not in edge_stmt *) }
+
+node_id<<(g: GraphData)>>: name=ID { g.AddNode name }
+
+edgeop: EDGEOP { }
+
+subgraph<<(g: GraphData)>>:
+    [ SUBGRAPH [ ID ] { } ] LCURBRACE  stmt_list<<g>> RCURBRACE { g.GetGraph().Vertices.ToList() }

@@ -3,10 +3,15 @@
 open FsUnit
 open NUnit.Framework
 open DotParser
+open System.Collections
+open System.Linq
 
 let isDirected (g: QuickGraph.IMutableVertexAndEdgeSet<_,_>) = g.IsDirected
 let isStrict (g: QuickGraph.IMutableVertexAndEdgeSet<_,_>) = not g.AllowParallelEdges
 let isEmpty (g: QuickGraph.IMutableVertexAndEdgeSet<_,_>) = g.IsVerticesEmpty
+
+let shouldContainVertices names (g: QuickGraph.IMutableVertexAndEdgeSet<_,_>) =
+    List.forall (fun n -> g.Vertices.Contains n) names |> should be True
 
 
 [<Test>]
@@ -23,40 +28,53 @@ let ``Named graph`` () = DotParser.parse "graph t { }" |> isEmpty |> should be T
 
 [<Test>]
 let ``Single node`` () =
-    let g = DotParser.parse "graph { a }"
+    let graph = DotParser.parse "graph { a }"
 
-    g.VertexCount |> should equal 1
-    g.EdgeCount |> should equal 0
+    graph.VertexCount |> should equal 1
+    graph.EdgeCount |> should equal 0
+
+    graph |> shouldContainVertices [ "a" ]
 
 
 [<Test>]
 let ``Multiple nodes`` () =
-    let g = DotParser.parse "graph { a b; c }"
+    let graph = DotParser.parse "graph { a b; c }"
 
-    g.VertexCount |> should equal 3
-    g.EdgeCount |> should equal 0
+    graph.VertexCount |> should equal 3
+    graph.EdgeCount |> should equal 0
+
+    graph |> shouldContainVertices [ "a"; "b"; "c" ]
+
 
 [<Test>]
 let ``Numeral node labels`` () =
     let graph = DotParser.parse "graph { 1 2 }"
 
-    shouldFail (fun _ -> printf "implement me")
-
     graph.VertexCount |> should equal 2
     graph.EdgeCount |> should equal 0
-    // todo: check vertices names
+    
+    graph |> shouldContainVertices [ "1"; "2" ]
 
 
 [<Test>]
 let ``Single edge`` () =
-    let graph = DotParser.parse "graph"
+    let graph = DotParser.parse "graph { a -- b } "
     
     graph.VertexCount |> should equal 2
     graph.EdgeCount |> should equal 1
     
+    graph |> shouldContainVertices [ "a"; "b" ]
 
 [<Test>]
 let ``Multiple edges`` () =
+    let graph = DotParser.parse "graph { a -- b c -- d }"
+
+    graph.VertexCount |> should equal 4
+    graph.EdgeCount |> should equal 2
+
+
+[<Test>]
+let ``Multiple edges in row`` () =
     let graph = DotParser.parse "graph { a -- b c -- d -- e }"
 
     graph.VertexCount |> should equal 5
@@ -77,12 +95,25 @@ let ``Strict graph`` () =
 
     graph.VertexCount |> should equal 2
     graph.EdgeCount |> should equal 1
+    // todo: add attributes
 
 
 [<Test>]
 let ``Keyword labels`` () =
     let graph = DotParser.parse "graph { \"graph\" -- \"node\" }"
-    // todo: check names 
-
+    
     graph.VertexCount |> should equal 2
     graph.EdgeCount |> should equal 1
+
+    graph |> shouldContainVertices [ "graph"; "node" ]
+
+
+[<Test>]
+let ``Wrong edge in directed`` () =
+    shouldFail (fun _ -> DotParser.parse "graph { a -> b }" |> ignore)
+
+
+[<Test>]
+let ``Wrong edge in undirected`` () =
+    shouldFail (fun _ -> DotParser.parse "digraph { a - b }" |> ignore)
+
