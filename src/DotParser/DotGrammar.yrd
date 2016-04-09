@@ -38,9 +38,10 @@ stmt<<(g: GraphData)>>:
 
 node_stmt<<(g: GraphData)>>: node_id<<g>> { }
 
-edge_stmt<<(g: GraphData)>>: n1=node_id<<g>> n2=edge_rhs<<g>> { g.AddEdge n1 n2 }
+edge_stmt<<(g: GraphData)>>: n=node_id<<g>> edge_rhs<<(g, n)>> { }
 
-edge_rhs<<(g: GraphData)>>: edgeop n=node_id<<g>> { n (* should add edges here, not in edge_stmt *) }
+edge_rhs<<(d: (GraphData * string list))>>:
+    nn=(edgeop n=node_id<<g>> {  g.AddEdge d n }) [ edge_rhs<<(g, nn)>> ] { }
 
 node_id<<(g: GraphData)>>: name=ID { g.AddNode name }
 

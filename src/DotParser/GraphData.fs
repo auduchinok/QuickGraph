@@ -41,10 +41,12 @@ type GraphData = class
         x.graph.AddVertex name |> ignore
         [name]
 
-    member x.AddEdge n1 n2 =
+    member x.AddEdge d n2 =
+        let g, n1 = d
         if List.length n1 <> List.length n2 then failwith "implement me" else ()
         
         List.iter2 (fun x1 x2 -> x.graph.AddEdge(new SEdge<_>(x1, x2)) |> ignore) n1 n2
+        n2
 
     member private x.AddEdges nodes attributes =
 //        match nodes with
