@@ -5,8 +5,9 @@ open System.Collections.Generic
 open System.Linq
 open QuickGraph
 
-let mutable g: GraphData = null
-
+let addEdge (d: GraphData * Node list) (n2: Node list) =
+    let g, n1 = d
+    g.AddEdge n1 n2
 }
 
 tokens {
@@ -23,29 +24,41 @@ options {
 module DotGrammar
 
 [<Start>]
-graph: g=graph_type [ ID ] LCURBRACE  stmt_list<<g>> RCURBRACE { }
+graph: g=graph_type [ID] LBRACE r=stmt_list<<g>> RBRACE { r }
 
-graph_type:
-    s=[ STRICT ] d=( GRAPH {false} | DIGRAPH {true} ) {g <- new GraphData (d, not <| isSome s); g}
+graph_type: s=[STRICT] d=(GRAPH { false } | DIGRAPH { true }) { GraphData (d, isSome s) }
 
-stmt_list<<(g: GraphData)>>: ( stmt<<g>> [SEMI] { } )* { }
+stmt_list<<(g: GraphData)>>: [r=stmt<<g>> [SEMI] [stmt_list<<r>>] { }] { g }
 
 stmt<<(g: GraphData)>>:
-    node_stmt<<g>> { } |
-    edge_stmt<<g>> { } |
-    subgraph<<(new GraphData(g.GetGraph().IsDirected, not <| g.GetGraph().AllowParallelEdges))>>
-    { (* should inherit all parent's attributes; return nodes here *) }
+    node_stmt<<g>> { g }
+  | edge_stmt<<g>> { g }
+  | attr_stmt<<g>> { g }
+  | subgraph<<g>>  { g }
+
+attr_stmt<<(g: GraphData)>>:
+    k=(GRAPH { "graph" } | NODE { "node" } | EDGE { "edge" }) a=attr_list { g.AddAttributes k a }
+
+attr_list: LBRACK a=[a_list] RBRACK { if isSome a then a.Value else [] }
+
+a_list: a=attr [SEMI { } | COMMA { }] l=[a_list] { if isSome l then a :: l.Value else [a] }
+(* -SEMI | -COMMA doesn't work *)
+
+attr: k=ID ASSIGN v=ID { (k, v) }
 
 node_stmt<<(g: GraphData)>>: node_id<<g>> { }
 
-edge_stmt<<(g: GraphData)>>: n=node_id<<g>> edge_rhs<<(g, n)>> { }
+edge_stmt<<(g: GraphData)>>: n=nodes<<g>> edge_rhs<<(g, n)>> { } 
 
-edge_rhs<<(d: (GraphData * string list))>>:
-    nn=(edgeop n=node_id<<g>> {  g.AddEdge d n }) [ edge_rhs<<(g, nn)>> ] { }
+edge_rhs<<(d: GraphData * Node list)>>:
+    edgeop n=nodes<<(fst d)>> r=[edge_rhs<<(fst d, n)>>] { addEdge d n }
+
+nodes<<(g: GraphData)>>: n=node_id<<g>> { n } | n=subgraph<<g>> { n }
+(* why n= ... {n} needed ? *)
+
+edgeop: EDGE { } | DIEDGE { }
 
 node_id<<(g: GraphData)>>: name=ID { g.AddNode name }
 
-edgeop: EDGEOP { }
-
 subgraph<<(g: GraphData)>>:
-    [ SUBGRAPH [ ID ] { } ] LCURBRACE  stmt_list<<g>> RCURBRACE { g.GetGraph().Vertices.ToList() }
+    [SUBGRAPH [ID] { }] LBRACE r=stmt_list<<(GraphData(g))>> RBRACE { g.AddSubgraph(r) }

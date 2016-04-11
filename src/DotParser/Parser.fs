@@ -8,7 +8,7 @@ open DotParserProject.GraphData
 open System.Collections.Generic
 open QuickGraph
 
-let parse str : IMutableVertexAndEdgeSet<_,_> =
+let parse (v: string -> Dictionary<_,_> -> _) str : IMutableVertexAndEdgeSet<_,_> =
     let translateArgs = {
             tokenToRange = fun _ -> Unchecked.defaultof<_>, Unchecked.defaultof<_>
             zeroPosition = Unchecked.defaultof<_>
@@ -19,8 +19,15 @@ let parse str : IMutableVertexAndEdgeSet<_,_> =
     let lexbuf = Lexing.LexBuffer<_>.FromString str
     let tokens = seq { while not lexbuf.IsPastEndOfStream do yield tokenize lexbuf }
 
-    match buildAst tokens with
-    | Error (pos, token, msg, debugFuns, _) -> failwithf "Error on position %d, token %A: %s" pos token msg
-    | Success (ast, errors) -> translate translateArgs ast errors |> ignore
+    let parsedGraphDataList : GraphData list = 
+        match buildAst tokens with
+        | Error (pos, token, msg, _, _) -> failwithf "Error on position %d, token %A: %s" pos token msg
+        | Success (ast, errors) ->
+//            ast.PrintAst()
+            translate translateArgs ast errors
     
-    g.GetGraph() // internal graph container, defined in DotGrammar.yrd
+//    printfn "%A" <| List.length parsedGraphDataList 
+
+    match parsedGraphDataList with
+    | graphData :: _ -> graphData.Graph
+    | [] -> failwith "Parser returned no data"
