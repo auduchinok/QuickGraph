@@ -50,8 +50,8 @@ let addAttributes (g : GraphData) (key : string) (a : Attributes) =
     | _ -> failwithf "DotParser: parser error: wrong attribute key: %s" key
 
 
-let addNode (g : GraphData) (n : string) =
-    { g with Nodes = Map.add n g.NodeAttributes g.Nodes }, [n]
+let addNode (g : GraphData) (n : string) (a : Attributes) =
+    { g with Nodes = Map.add n (merge g.NodeAttributes a) g.Nodes }, [n]
 
 
 let addEdge (g : GraphData) (n1 : string) (n2 : string) =
@@ -70,7 +70,7 @@ let addEdges (g : GraphData) (ns1 : string list) (ns2 : string list) =
 
 
 let addSubgraph (g : GraphData) (s : GraphData) =
-    let addNodes g = Map.fold (fun acc n attr -> fst <| addNode acc n) g s.Nodes
+    let addNodes g = Map.fold (fun acc n attr -> fst <| addNode acc n attr) g s.Nodes
     let addEdges g = Map.fold (fun acc (n1, n2) attr -> addEdge acc n1 n2) g s.Edges
 
     (g |> addNodes |> addEdges), (s.Nodes |> Map.toList |> List.map fst)

@@ -209,6 +209,7 @@ let ``Strict graph attributes`` () =
 
     graph.Edges.["a", "b"] |> should equal [map ["color", "red"]]
 
+
 [<Test>]
 let ``Edge statement attributes`` () =
     let graph = DotParser.parse "graph { a -- b [color=red] }"
@@ -217,10 +218,10 @@ let ``Edge statement attributes`` () =
 
 [<Test>]
 let ``Node statement attributes`` () =
-    let graph = DotParser.parse "grah { a [color=red] b c [color=blue] }"
+    let graph = DotParser.parse "graph { a [color=red] b c [color=blue] }"
 
     nodesCount graph |> should equal 3
 
-    graph.Nodes.["a"] |> should equal [map ["color", "red"]]
-    graph.Nodes.["b"] |> should equal [Map.empty]
-    graph.Nodes.["c"] |> should equal [map ["color", "blue"]]
+    graph.Nodes.["a"] |> should equal (map ["color", "red"])
+    graph.Nodes.["b"] |> should equal Map.empty
+    graph.Nodes.["c"] |> should equal (map ["color", "blue"])
