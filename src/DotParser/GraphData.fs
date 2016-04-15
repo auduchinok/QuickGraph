@@ -40,7 +40,7 @@ let copyAttrs (g : GraphData) =
         EdgeAttributes  = g.EdgeAttributes
     }
 
-let merge m1 m2 = Map.fold (fun acc key value -> Map.add key value acc) m1 m2
+let merge = Map.fold (fun acc key value -> Map.add key value acc)
 
 let addAttributes (g : GraphData) (key : string) (a : Attributes) =
     match key with
@@ -62,7 +62,7 @@ let addEdge (g : GraphData) (n1 : string) (n2 : string) (a : Attributes) =
         | Some oldEdges, false -> (merge g.EdgeAttributes a):: oldEdges
         | _ -> [merge g.EdgeAttributes a]
 
-    { g with Edges = Map.add edge newEdges g.Edges } (* todo: merge attrs when strict *)
+    { g with Edges = Map.add edge newEdges g.Edges }
 
 
 let addEdges (g : GraphData) (ns1 : string list) (ns2 : string list) (a : Attributes) =
@@ -73,7 +73,7 @@ let addEdgesForList (g : GraphData) (ns : string list list) (a : Attributes) =
 
 let addSubgraph (g : GraphData) (s : GraphData) =
     let addNodes g = Map.fold (fun acc n attr -> fst <| addNode acc n attr) g s.Nodes
-    let addParallelEdges g n1 n2 (attr : Attributes list) = List.fold (fun acc x -> addEdge g n1 n2 x) g attr
-    let addEdges g = Map.fold (fun acc (n1, n2) attr -> addParallelEdges acc n1 n2 attr) g s.Edges
+    let addParallelEdges n1 n2 = List.fold (fun acc x -> addEdge acc n1 n2 x)
+    let addEdges g = Map.fold (fun acc (n1, n2) attr -> addParallelEdges n1 n2 acc attr) g s.Edges
 
     (g |> addNodes |> addEdges), (s.Nodes |> Map.toList |> List.map fst)

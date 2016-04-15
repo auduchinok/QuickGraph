@@ -214,7 +214,6 @@ let ``Strict graph attributes`` () =
 let ``Edge statement attributes`` () =
     let graph = DotParser.parse "graph { a -- b [color=red] }"
 
-    printfn "%A" graph
     graph.Edges.["a", "b"] |> should equal [map ["color", "red"]]
 
 
@@ -227,6 +226,7 @@ let ``Node statement attributes`` () =
     graph.Nodes.["a"] |> should equal (map ["color", "red"])
     graph.Nodes.["b"] |> should equal Map.empty
     graph.Nodes.["c"] |> should equal (map ["color", "blue"])
+
 
 [<Test>]
 let ``Mixed statement and default attributes with subgraphs`` () =
@@ -254,9 +254,10 @@ let ``Mixed statement and default attributes with subgraphs`` () =
     graph.Edges.["x", "z"] |> should equal [map ["color", "yellow"]]
     graph.Edges.["v", "y"] |> should equal [map ["color", "red"]]
 
+
 [<Test>]
 let ``Multiple directed edges`` () =
     let graph = DotParser.parse "digraph { a -> b f -> e }"
-    printfn "%A" graph
+
     graph.Edges.ContainsKey("a", "b") |> should be True
     graph.Edges.ContainsKey("f", "e") |> should be True
