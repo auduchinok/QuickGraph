@@ -231,28 +231,22 @@ let ``Node statement attributes`` () =
 [<Test>]
 let ``Mixed statement and default attributes with subgraphs`` () =
     let graph =
-        "graph {"
-      + "  a -- b"
-      + "  edge [color=red]"
-      + "  a -- c"
-      + "  a -- d [color=green]"
-      + "  a -- { e -- f [color=yellow] g -- h }"
-      + "  a -- { z -- x [color=yellow] y -- v } [color=blue]"
-      + "}" |> DotParser.parse
+        "graph { a -- b edge [color=green] a -- c a -- d [color=red]" +
+        "a -- { e -- f [color=pink] g -- h }" +
+        "a -- { edge [color=red] z -- x [color=pink] y -- v } [color=blue] }"
+        |> DotParser.parse
 
-    graph.Edges.["a", "b"] |> should equal [Map.empty]
-    graph.Edges.["a", "c"] |> should equal [map ["color", "red"]]
-    graph.Edges.["a", "d"] |> should equal [map ["color", "green"]]
-    graph.Edges.["a", "e"] |> should equal [map ["color", "red"]]
-    graph.Edges.["a", "f"] |> should equal [map ["color", "red"]]
-    graph.Edges.["a", "g"] |> should equal [map ["color", "red"]]
-    graph.Edges.["a", "h"] |> should equal [map ["color", "red"]]
-    graph.Edges.["a", "z"] |> should equal [map ["color", "blue"]]
-    graph.Edges.["a", "y"] |> should equal [map ["color", "blue"]]
-    graph.Edges.["e", "f"] |> should equal [map ["color", "yellow"]]
-    graph.Edges.["g", "h"] |> should equal [map ["color", "red"]]
-    graph.Edges.["x", "z"] |> should equal [map ["color", "yellow"]]
-    graph.Edges.["v", "y"] |> should equal [map ["color", "red"]]
+    let edges =
+        [("a", "b"), [Map.empty];
+         ("a", "c"), [map ["color", "green"]]; ("a", "d"), [map ["color", "red"]];
+         ("a", "e"), [map ["color", "green"]]; ("a", "f"), [map ["color", "green"]];
+         ("a", "g"), [map ["color", "green"]]; ("a", "h"), [map ["color", "green"]];
+         ("a", "z"), [map ["color", "blue"]];  ("a", "v"), [map ["color", "blue"]];
+         ("a", "y"), [map ["color", "blue"]];  ("a", "x"), [map ["color", "blue"]];
+         ("e", "f"), [map ["color", "pink"]];  ("g", "h"), [map ["color", "green"]];
+         ("x", "z"), [map ["color", "pink"]];  ("v", "y"), [map ["color", "red"]]]
+
+    graph.Edges |> should equal (edges |> map)
 
 
 [<Test>]

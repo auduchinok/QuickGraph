@@ -11,7 +11,7 @@ type GraphData =
     {
         IsDirected : bool
         IsStrict   : bool
-        Nodes : Map<string,          Attributes>
+        Nodes : Map<string, Attributes>
         Edges : Map<string * string, Attributes list>
         GraphAttributes : Attributes
         NodeAttributes  : Attributes
@@ -59,7 +59,7 @@ let addEdge (g : GraphData) (n1 : string) (n2 : string) (a : Attributes) =
     let newEdges =
         match g.Edges.TryFind edge, g.IsStrict with
         | Some oldEdges, true  -> [merge (merge (List.head oldEdges) g.EdgeAttributes) a]
-        | Some oldEdges, false -> (merge g.EdgeAttributes a):: oldEdges
+        | Some oldEdges, false -> (merge g.EdgeAttributes a) :: oldEdges
         | _ -> [merge g.EdgeAttributes a]
 
     { g with Edges = Map.add edge newEdges g.Edges }
