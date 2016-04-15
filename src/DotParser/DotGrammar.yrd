@@ -49,18 +49,16 @@ attr: k=ID ASSIGN v=ID { (k, v) }
 
 node_stmt<<(g: GraphData)>>: n=ID a=[attr_list] { addNode g n (if isSome a then (map a.Value) else Map.empty) |> fst }
 
-edge_stmt<<(g: GraphData)>>: n=nodes<<g>> g1=edge_rhs<<(fst n, snd n)>> { fst g1 }
+edge_stmt<<(g: GraphData)>>:
+	n=nodes<<g>> g1=edge_rhs<<(fst n, [snd n])>> a=[attr_list] { addEdgesForList (fst g1) (snd g1) (if isSome a then (map a.Value) else Map.empty) }
 
-edge_rhs<<(d: GraphData * string list)>>:
-    e=edgeop<<d>> r=[edge_rhs<<(fst e, snd e)>>] { if isSome r then r.Value else e }
+edge_rhs<<(d: GraphData * string list list)>>:
+    edgeop<<(fst d)>> n=nodes<<(fst d)>> r=[edge_rhs<<(fst n, (snd n) :: (snd d))>>] { if isSome r then r.Value else (fst n), ((snd n) :: (snd d)) }
 
 nodes<<(g: GraphData)>>: n=node_id<<g>> { n } | n=subgraph<<g>> { n }
 (* why n= ... {n} needed ? *)
 
-edgeop<<(d: GraphData * string list)>>:
-     edge<<(fst d)>> n=nodes<<(fst d)>> { addEdges (fst n) (snd d) (snd n) }
-
-edge<<(g: GraphData)>>:
+edgeop<<(g: GraphData)>>:
 	EDGE { if g.IsDirected then wrongEdge "--" else () }
   | DIEDGE { if not <| g.IsDirected then wrongEdge "->" else () }
 
