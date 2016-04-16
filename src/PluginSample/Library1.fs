@@ -12,15 +12,13 @@ open System.Windows.Forms
 do()
 
 [<Extension>]
-type SamplePlugin() = 
+type SamplePlugin() =
     interface IAlgorithm with
         member this.Name = "Sample Plugin"
         member this.Description = "This plugin demonstrates how to use plugin system.\n" +
                                   "Add references to your plugins to MainForm project.\n" +
                                   "Read more at Mono.Addins wiki page on GitHub."
-        member this.Author = "Anastasiya Ragozina, Eugene Auduchinok"
+        member this.Author = "Eugene Auduchinok, Anastasiya Ragozina"
         member this.Input = new System.Windows.Forms.TextBox()
         member this.Output = new GraphX.Controls.GraphArea<VertexBase, EdgeBase<VertexBase>, BidirectionalGraph<VertexBase, EdgeBase<VertexBase>>> ()
-//        member this.Run = ()
-        
-
+        member this.Run () = ()

@@ -20,7 +20,7 @@ namespace QuickGraph
     [Serializable]
 #endif
     [DebuggerDisplay("VertexCount = {VertexCount}, EdgeCount = {EdgeCount}")]
-    public class BidirectionalGraph<TVertex, TEdge> 
+    public class BidirectionalGraph<TVertex, TEdge>
         : IVertexAndEdgeListGraph<TVertex, TEdge>
         , IEdgeListAndIncidenceGraph<TVertex, TEdge>
         , IMutableEdgeListGraph<TVertex, TEdge>
@@ -65,8 +65,8 @@ namespace QuickGraph
         }
 
         public BidirectionalGraph(
-            bool allowParallelEdges, 
-            int capacity, 
+            bool allowParallelEdges,
+            int capacity,
             Func<int, IVertexEdgeDictionary<TVertex, TEdge>> vertexEdgesDictionaryFactory)
         {
             Contract.Requires(vertexEdgesDictionaryFactory != null);
@@ -74,7 +74,7 @@ namespace QuickGraph
             this.vertexInEdges = vertexEdgesDictionaryFactory(capacity);
             this.vertexOutEdges = vertexEdgesDictionaryFactory(capacity);
         }
- 
+
         public static Type EdgeType
         {
             [Pure]
@@ -213,9 +213,9 @@ namespace QuickGraph
 
         public int EdgeCount
         {
-            get 
+            get
             {
-                return this.edgeCount; 
+                return this.edgeCount;
             }
         }
 
@@ -595,32 +595,16 @@ namespace QuickGraph
             foreach (var v in mergeVertices)
                 MergeVertex(v, edgeFactory);
         }
-        
-        //public static BidirectionalGraph<TVertex,TEdge> LoadDot(String s, Func<string, Tuple<string, string>[], TVertex> fVertex, Func<string, string, Tuple<string, string>[], TEdge> fEdge)
-        //{
-        //    var graph = DotLangParser.parse(s);
-        //    var VertWithAttrs = graph.GetNodes();
-        //    var EdgesWithAttrs = graph.GetEdges();
-        //    var BidGraph = new BidirectionalGraph<TVertex, TEdge>();
-        //    foreach (var i in EdgesWithAttrs)
-        //    {
-        //        var NewEdge = fEdge(i.Item1, i.Item2, i.Item3);
-        //        BidGraph.AddVerticesAndEdge(NewEdge); 
-        //    }
-        //    foreach (var i in VertWithAttrs)
-        //    {
-        //        var NewVertex = fVertex(i.Item1, i.Item2);
-        //        BidGraph.AddVertex(NewVertex);
-        //    }
-        //    return BidGraph;
-        //}
 
-        //public static BidirectionalGraph<TVertex, TEdge> LoadDotFromFile(String path, Func<string, Tuple<string, string>[], TVertex> fVertex, Func<string, string, Tuple<string, string>[], TEdge> fEdge)
-        //{
-        //    var str = System.String.Concat(System.IO.File.ReadLines(path));
-        //    return LoadDot(str, fVertex, fEdge);
-        //}
-
+        public static BidirectionalGraph<TVertex, TEdge> LoadDot(string dotSource,
+            Func<string, IDictionary<string, string>, TVertex> vertexFunc,
+            Func<TVertex, TVertex, IDictionary<string, string>, TEdge> edgeFunc)
+        {
+            var graphData = DotParser.parse(dotSource);
+            var newGraph = new BidirectionalGraph<TVertex, TEdge>(!graphData.IsStrict);
+            var graph = DotParserAdapter.ConvertToGraph(graphData, newGraph, vertexFunc, edgeFunc);
+            return (BidirectionalGraph<TVertex, TEdge>) graph;
+        }
         #region ICloneable Members
 
         /// <summary>
@@ -663,9 +647,9 @@ namespace QuickGraph
             return new BidirectionalGraph<TVertex, TEdge>(this);
         }
 
-        
 
-                
+
+
 #if !SILVERLIGHT
         object ICloneable.Clone()
         {

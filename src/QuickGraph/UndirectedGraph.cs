@@ -14,7 +14,7 @@ namespace QuickGraph
     [Serializable]
 #endif
     [DebuggerDisplay("VertexCount = {VertexCount}, EdgeCount = {EdgeCount}")]
-    public class UndirectedGraph<TVertex, TEdge> 
+    public class UndirectedGraph<TVertex, TEdge>
         : IMutableUndirectedGraph<TVertex,TEdge>
 #if !SILVERLIGHT
         , ICloneable
@@ -63,7 +63,17 @@ namespace QuickGraph
                 this.edgeCapacity = value;
             }
         }
-    
+
+        public static UndirectedGraph<TVertex, TEdge> LoadDot(string dotSource,
+            Func<string, IDictionary<string, string>, TVertex> vertexFunc,
+            Func<TVertex, TVertex, IDictionary<string, string>, TEdge> edgeFunc)
+        {
+            var graphData = DotParser.parse(dotSource);
+            var newGraph = new UndirectedGraph<TVertex, TEdge>(!graphData.IsStrict);
+            var graph = DotParserAdapter.ConvertToGraph(graphData, newGraph, vertexFunc, edgeFunc);
+            return (UndirectedGraph<TVertex, TEdge>)graph;
+        }
+
         #region IGraph<Vertex,Edge> Members
         public bool  IsDirected
         {
@@ -101,8 +111,8 @@ namespace QuickGraph
             if (this.ContainsVertex(v))
                 return false;
 
-            var edges = this.EdgeCapacity < 0 
-                ? new EdgeList<TVertex, TEdge>() 
+            var edges = this.EdgeCapacity < 0
+                ? new EdgeList<TVertex, TEdge>()
                 : new EdgeList<TVertex, TEdge>(this.EdgeCapacity);
             this.adjacentEdges.Add(v, edges);
             this.OnVertexAdded(v);
@@ -113,8 +123,8 @@ namespace QuickGraph
         {
             IEdgeList<TVertex, TEdge> edges;
             if (!this.adjacentEdges.TryGetValue(v, out edges))
-                this.adjacentEdges[v] = edges = this.EdgeCapacity < 0 
-                    ? new EdgeList<TVertex, TEdge>() 
+                this.adjacentEdges[v] = edges = this.EdgeCapacity < 0
+                    ? new EdgeList<TVertex, TEdge>()
                     : new EdgeList<TVertex, TEdge>(this.EdgeCapacity);
 
             return edges;
@@ -388,7 +398,7 @@ namespace QuickGraph
 
         public IEnumerable<TEdge> Edges
         {
-            get 
+            get
             {
                 var edgeColors = new Dictionary<TEdge, GraphColor>(this.EdgeCount);
                 foreach (var edges in this.adjacentEdges.Values)

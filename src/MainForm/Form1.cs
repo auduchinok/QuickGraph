@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using DotParserProject;
+using QuickGraph;
+using static QuickGraph.DotParserAdapter;
 
 namespace MainForm
 {
@@ -15,13 +17,21 @@ namespace MainForm
 
         private void ParseButtonClick(object sender, EventArgs e)
         {
-            //Program.CurrentAlgorithm.Run(DotLangParser.parse(Program.Editor.Text));
-            //Program.CurrentAlgorithm.Run(); // todo: send graph parsed from dot
+            try
+            {
+                var dot = Program.Editor.Text;
+                var vertexFun = VertexFunctions.WeightOrFallback(0);
+                var edgeFun = EdgeFunctions<KeyValuePair<string, int>>.VerticesOnly;
 
-            //var graph = DotParser.parse(Program.Editor.Text);
-            //MessageBox.Show(
-            //    $"{graph.GetType()} {graph.AllowParallelEdges}\n{graph.Vertices.Aggregate("", (current, vertex) => current + vertex + "\n")}");
-            //MessageBox.Show(graph.GetNodes().Aggregate("", (current, node) => current + node.Item1 + "\n"));
+                var graph = BidirectionalGraph<KeyValuePair<string, int>, SEdge<KeyValuePair<string, int>>>.LoadDot(dot, vertexFun, edgeFun);
+
+                var totalWeight = graph.Vertices.Sum(vertex => vertex.Value);
+                MessageBox.Show($"{graph.VertexCount} vertice(s), {graph.EdgeCount} edge(s). Total vertices weight: {totalWeight}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void algorithmsList_SelectedIndexChanged(object sender, EventArgs e)
