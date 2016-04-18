@@ -8,21 +8,21 @@ namespace QuickGraph
 
     public class DotParserAdapter
     {
-        /// <param name="graphData">Parsed newGraph data returned from DotParser</param>
-        /// <param name="newGraph">Graph object to populate</param>
+        /// <param name="dotSource"></param>
+        /// <param name="createGraph">Graph constructor function</param>
         /// <param name="vertexFunc">Packing function (see VertexFunctions class)</param>
         /// <param name="edgeFunc">Packing function (see EdgeFunctions class)</param>
-        internal static IMutableVertexAndEdgeSet<TVertex, TEdge> ConvertToGraph<TVertex, TEdge>(GraphData graphData,
-            IMutableVertexAndEdgeSet<TVertex, TEdge> newGraph,
+        internal static IMutableVertexAndEdgeSet<TVertex, TEdge> LoadDot<TVertex, TEdge>(string dotSource,
+            Func<bool, IMutableVertexAndEdgeSet<TVertex, TEdge>> createGraph,
             Func<string, Attributes, TVertex> vertexFunc,
             Func<TVertex, TVertex, Attributes, TEdge> edgeFunc) where TEdge : IEdge<TVertex>
         {
-            if (graphData.IsDirected && !newGraph.IsDirected)
-                throw new Exception($"Parsed graph is directed, newGraph expected to be an instance of directed graph");
+            var graphData = DotParser.parse(dotSource);
+            var graph = createGraph(!graphData.IsStrict);
 
             foreach (var node in graphData.Nodes)
             {
-                newGraph.AddVertex(vertexFunc(node.Key, node.Value));
+                graph.AddVertex(vertexFunc(node.Key, node.Value));
             }
             foreach (var parallelEdges in graphData.Edges)
             {
@@ -32,10 +32,10 @@ namespace QuickGraph
 
                 foreach (var attr in parallelEdges.Value)
                 {
-                    newGraph.AddEdge(edgeFunc(v1, v2, attr));
+                    graph.AddEdge(edgeFunc(v1, v2, attr));
                 }
             }
-            return newGraph;
+            return graph;
         }
 
         public class Common

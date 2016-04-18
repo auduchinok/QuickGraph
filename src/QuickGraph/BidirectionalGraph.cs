@@ -600,11 +600,13 @@ namespace QuickGraph
             Func<string, IDictionary<string, string>, TVertex> vertexFunc,
             Func<TVertex, TVertex, IDictionary<string, string>, TEdge> edgeFunc)
         {
-            var graphData = DotParser.parse(dotSource);
-            var newGraph = new BidirectionalGraph<TVertex, TEdge>(!graphData.IsStrict);
-            var graph = DotParserAdapter.ConvertToGraph(graphData, newGraph, vertexFunc, edgeFunc);
-            return (BidirectionalGraph<TVertex, TEdge>) graph;
+            Func<bool, IMutableVertexAndEdgeSet<TVertex, TEdge>> createGraph = (allowParallelEdges) =>
+                new BidirectionalGraph<TVertex, TEdge>(allowParallelEdges);
+
+            return (BidirectionalGraph<TVertex, TEdge>)
+                DotParserAdapter.LoadDot(dotSource, createGraph, vertexFunc, edgeFunc);
         }
+
         #region ICloneable Members
 
         /// <summary>
