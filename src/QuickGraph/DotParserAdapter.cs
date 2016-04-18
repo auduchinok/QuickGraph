@@ -65,7 +65,8 @@ namespace QuickGraph
 
 
             public static Func<string, Attributes, KeyValuePair<string, Attributes>>
-                NameAndAttributes = (v, attr) => new KeyValuePair<string, Attributes>(v, attr);
+                NameAndAttributes = (v, attrs) =>
+                    new KeyValuePair<string, Attributes>(v, new Dictionary<string, string>(attrs));
 
 
             public static Func<string, Attributes, KeyValuePair<string, int?>>
@@ -93,7 +94,7 @@ namespace QuickGraph
 
             public static Func<TVertex, TVertex, Attributes, STaggedEdge<TVertex, Attributes>>
                 VerticesAndEdgeAttributes = (v1, v2, attrs) =>
-                    new STaggedEdge<TVertex, Attributes>(v1, v2, attrs);
+                    new STaggedEdge<TVertex, Attributes>(v1, v2, new Dictionary<string, string>(attrs));
 
 
             public static Func<TVertex, TVertex, Attributes, STaggedEdge<TVertex, int?>>
